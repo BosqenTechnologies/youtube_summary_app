@@ -1,28 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youtube_summary_app/features/youtube_summary/data/services/database_service.dart';
+import 'package:youtube_summary_app/features/youtube_summary/data/services/youtube_extraction_service.dart';
 
-class SummaryState {
-  final bool isLoading;
-  final String? error;
-  final VideoSummary? summary;
-
-  SummaryState({
-    this.isLoading = false,
-    this.error,
-    this.summary,
-  });
-
-  SummaryState copyWith({
-    bool? isLoading,
-    String? error,
-    VideoSummary? summary,
-  }) {
-    return SummaryState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
-      summary: summary ?? this.summary,
-    );
-  }
-}
+// ──────────────────────────────────────────────
+// DATA MODEL
+// ──────────────────────────────────────────────
 
 class VideoSummary {
   final String title;
@@ -38,28 +20,91 @@ class VideoSummary {
   });
 }
 
-class SummaryNotifier extends StateNotifier<SummaryState> {
-  SummaryNotifier() : super(SummaryState());
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
 
-  Future<void> summarize(String url) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Mock data based on the screenshot for demonstration
-    state = state.copyWith(
-      isLoading: false,
-      summary: VideoSummary(
-        title: 'Top 5 AI Stocks To Buy in 2024',
-        channelName: 'Investing Insights',
-        thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg', // Placeholder
-        summaryText: 'Top 5 AI stocks to consider for 2024 are highlighted, focusing on companies leading in AI innovation and poised for growth. Financial performance and future potential of these stocks are discussed, with emphasis on their role in the AI sector.\n• Key AI companies like Nvidia and Google are mentioned as top picks.',
-      ),
+class SummaryState {
+  final bool isLoading;
+  final String? error;
+  final VideoSummary? summary;
+
+  const SummaryState({
+    this.isLoading = false,
+    this.error,
+    this.summary,
+  });
+
+  // ✅ FIXED: Use boolean flags to explicitly clear nullable fields.
+  // The old pattern (error ?? this.error) never cleared error when null was passed.
+  SummaryState copyWith({
+    bool? isLoading,
+    String? error,
+    VideoSummary? summary,
+    bool clearError = false,      // ← pass clearError: true to set error → null
+    bool clearSummary = false,    // ← pass clearSummary: true to set summary → null
+  }) {
+    return SummaryState(
+      isLoading: isLoading ?? this.isLoading,
+      error: clearError ? null : (error ?? this.error),
+      summary: clearSummary ? null : (summary ?? this.summary),
     );
   }
 }
 
-final summaryProvider = StateNotifierProvider<SummaryNotifier, SummaryState>((ref) {
+// ──────────────────────────────────────────────
+// NOTIFIER
+// ──────────────────────────────────────────────
+
+class SummaryNotifier extends StateNotifier<SummaryState> {
+  SummaryNotifier() : super(const SummaryState());
+
+  final _extractionService = YouTubeExtractionService();
+  final _databaseService = DatabaseService();
+
+  Future<void> summarize(String url) async {
+    // ✅ FIXED: clearError: true actually sets error to null now
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      clearSummary: true,
+    );
+
+    try {
+      // Step 1: Extract from YouTube (uses fallback if blocked)
+      final videoData = await _extractionService.fetchVideoData(url);
+
+      // Step 2: Save to Supabase
+      await _databaseService.saveVideoData(videoData);
+
+      // Step 3: Update UI with result
+      final transcript = videoData['transcript'] as String;
+      state = state.copyWith(
+        isLoading: false,
+        summary: VideoSummary(
+          title: videoData['title'],
+          channelName: videoData['channel_name'],
+          thumbnailUrl:
+              'https://img.youtube.com/vi/${videoData['video_id']}/0.jpg',
+          summaryText: transcript.length > 300
+              ? '${transcript.substring(0, 300)}...'
+              : transcript,
+        ),
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to process video: ${e.toString()}',
+      );
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// PROVIDER
+// ──────────────────────────────────────────────
+
+final summaryProvider =
+    StateNotifierProvider<SummaryNotifier, SummaryState>((ref) {
   return SummaryNotifier();
 });
