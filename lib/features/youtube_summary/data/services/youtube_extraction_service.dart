@@ -15,7 +15,8 @@ class YouTubeExtractionService {
     try {
       // 2. Call our API passing the URL.
       final encodedUrl = Uri.encodeComponent(url.trim());
-      final apiUrl = Uri.parse('https://py-script-youtube-summary-app.onrender.com/transcript?url=$encodedUrl');
+      // final apiUrl = Uri.parse('https://py-script-youtube-summary-app.onrender.com/transcript?url=$encodedUrl');
+      final apiUrl = Uri.parse('http://127.0.0.1:8001/transcript?url=$encodedUrl');
       final response = await http.get(apiUrl);
 
       if (response.statusCode != 200) {
