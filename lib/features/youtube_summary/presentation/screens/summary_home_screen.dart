@@ -32,6 +32,65 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
     }
   }
 
+  // Function to show the scrollable transcript bottom sheet
+  void _showFullTranscript(BuildContext context, String transcript) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows the sheet to take up more than half the screen
+      backgroundColor: Colors.transparent, // Makes the rounded corners look correct
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85, // Takes up 85% of screen height
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with Title and Close Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Full Transcript',
+                    style: TextStyle(
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 12),
+              
+              // Scrollable Transcript Text
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Text(
+                    transcript,
+                    style: const TextStyle(
+                      fontSize: 16, 
+                      height: 1.6, // Adds nice line spacing for readability
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(summaryProvider);
@@ -40,11 +99,9 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
       appBar: AppBar(
         title: const Text('TubeSum'),
       ),
-      // 🔥 NEW: Wrapped in RefreshIndicator 🔥
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
         child: SingleChildScrollView(
-          // 🔥 NEW: Forced physics so pull-to-refresh works even on short screens 🔥
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
@@ -86,14 +143,48 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                   child: CircularProgressIndicator(),
                 ),
                 
-              if (state.summary != null && !state.isLoading)
+              // 🔥 NEW: Wrapped Result Card and New Summary Button in a spread operator collection
+              if (state.summary != null && !state.isLoading) ...[
                 SummaryResultCard(
                   thumbnailUrl: state.summary!.thumbnailUrl,
                   title: state.summary!.title,
                   channelName: state.summary!.channelName,
                   summary: state.summary!.summaryText,
-                  onViewTranscript: () {},
+                  onViewTranscript: () {
+                    _showFullTranscript(context, state.summary!.summaryText);
+                  },
                 ),
+                
+                const SizedBox(height: 16),
+                
+                // 🔥 NEW: "Start New Summary" Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text(
+                        'Start New Summary',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        // 1. Clear the text field
+                        _urlController.clear();
+                        
+                        // 2. Instantly wipe the state clean to give a fresh screen
+                        ref.invalidate(summaryProvider);
+                      },
+                    ),
+                  ),
+                ),
+              ],
                 
               const InfoTipCard(),
             ],
