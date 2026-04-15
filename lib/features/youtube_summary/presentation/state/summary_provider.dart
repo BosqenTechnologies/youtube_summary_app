@@ -11,12 +11,14 @@ class VideoSummary {
   final String channelName;
   final String thumbnailUrl;
   final String summaryText;
+  final String fullTranscript;
 
   VideoSummary({
     required this.title,
     required this.channelName,
     required this.thumbnailUrl,
     required this.summaryText,
+    required this.fullTranscript,
   });
 }
 
@@ -89,6 +91,7 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
           summaryText: transcript.length > 300
               ? '${transcript.substring(0, 300)}...'
               : transcript,
+          fullTranscript: transcript,
         ),
       );
     } catch (e) {

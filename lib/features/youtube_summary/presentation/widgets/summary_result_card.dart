@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 
-class SummaryResultCard extends StatelessWidget {
+class SummaryResultCard extends StatefulWidget {
   final String thumbnailUrl;
   final String title;
   final String channelName;
   final String summary;
-  final VoidCallback onViewTranscript;
+  final String fullTranscript;
 
   const SummaryResultCard({
     super.key,
@@ -15,8 +15,15 @@ class SummaryResultCard extends StatelessWidget {
     required this.title,
     required this.channelName,
     required this.summary,
-    required this.onViewTranscript,
+    required this.fullTranscript,
   });
+
+  @override
+  State<SummaryResultCard> createState() => _SummaryResultCardState();
+}
+
+class _SummaryResultCardState extends State<SummaryResultCard> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +40,7 @@ class SummaryResultCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: CachedNetworkImage(
-                    imageUrl: thumbnailUrl,
+                    imageUrl: widget.thumbnailUrl,
                     width: 100,
                     height: 60,
                     fit: BoxFit.cover,
@@ -47,7 +54,7 @@ class SummaryResultCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
+                        widget.title,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -55,7 +62,7 @@ class SummaryResultCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        channelName,
+                        widget.channelName,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -73,9 +80,9 @@ class SummaryResultCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Summary',
-                    style: TextStyle(
+                  Text(
+                    _isExpanded ? 'Full Transcript' : 'Summary',
+                    style: const TextStyle(
                       color: AppColors.primaryBlue,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -83,15 +90,19 @@ class SummaryResultCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    summary,
+                    _isExpanded ? widget.fullTranscript : widget.summary,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: onViewTranscript,
-                      child: const Text('View Full Transcript'),
+                      onPressed: () {
+                        setState(() {
+                          _isExpanded = !_isExpanded;
+                        });
+                      },
+                      child: Text(_isExpanded ? 'Hide Full Transcript' : 'View Full Transcript'),
                     ),
                   ),
                 ],

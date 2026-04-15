@@ -92,7 +92,7 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                   title: state.summary!.title,
                   channelName: state.summary!.channelName,
                   summary: state.summary!.summaryText,
-                  onViewTranscript: () {},
+                  fullTranscript: state.summary!.fullTranscript,
                 ),
                 
               const InfoTipCard(),

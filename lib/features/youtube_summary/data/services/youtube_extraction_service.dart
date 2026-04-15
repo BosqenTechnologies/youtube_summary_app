@@ -1,4 +1,5 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class YouTubeExtractionService {
   Future<Map<String, dynamic>> fetchVideoData(String url) async {
@@ -12,36 +13,32 @@ class YouTubeExtractionService {
     }
 
     try {
-      // 2. Call your new Supabase Edge Function!
-      final response = await Supabase.instance.client.functions.invoke(
-        'get-transcript',
-        body: {'url': url.trim()},
-      );
+      // 2. Call our API passing the URL.
+      final encodedUrl = Uri.encodeComponent(url.trim());
+      final apiUrl = Uri.parse('https://py-script-youtube-summary-app.onrender.com/transcript?url=$encodedUrl');
+      final response = await http.get(apiUrl);
 
-      // 3. Extract the data
-      final data = response.data as Map<String, dynamic>;
-
-      // Check if the server sent back a specific error
-      if (data.containsKey('error')) {
-        throw Exception(data['error']);
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch from Python API (Status ${response.statusCode}). Message: ${response.body}');
       }
 
-      // 4. Validate the response has all required fields
-      final required = ['video_id', 'video_url', 'title', 'channel_name', 'transcript'];
-      for (final key in required) {
-        if (data[key] == null || data[key].toString().isEmpty) {
-          throw Exception('Server returned incomplete data. Missing: $key');
-        }
-      }
-
-      return data;
+      final data = jsonDecode(response.body);
       
-    } on FunctionException catch (e) {
-      // Handles errors thrown directly by the Edge Function
-      throw Exception('Server Error: ${e.details ?? e.reasonPhrase}');
+      if (data['status'] == 'error') {
+        throw Exception(data['message']);
+      }
+
+      // 3. Return data precisely as Supabase Database expects
+      return {
+        'video_id': data['video_id'],
+        'video_url': data['video_url'],
+        'title': data['title'],
+        'channel_name': data['channel_name'],
+        'transcript': data['transcript'],
+      };
+      
     } catch (e) {
-      // Handles network issues (like no internet)
-      throw Exception('Failed to connect to server: $e');
+      throw Exception('Extraction Error: $e');
     }
   }
 
