@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "723380008177",
+    "project_id": "summary-6ffef",
+    "storage_bucket": "summary-6ffef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:723380008177:android:5c9858b0acf586c55c6550",
+        "android_client_info": {
+          "package_name": "com.example.youtube_summary_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1Qjf3ZPqvBkNAZWYDNb__bauvXUsVU5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

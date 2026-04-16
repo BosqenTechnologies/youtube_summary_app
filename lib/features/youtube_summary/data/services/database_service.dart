@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class DatabaseService {
   final supabase = Supabase.instance.client;
 
+  // ── 1. Video Summary Methods ──
   Future<void> saveVideoData(Map<String, dynamic> videoData) async {
     try {
       await supabase.from('youtube_summaries').insert({
@@ -15,9 +16,7 @@ class DatabaseService {
       });
       print('✅ Saved to Supabase successfully!');
     } on PostgrestException catch (e) {
-      // ✅ Catch Supabase-specific errors properly
       if (e.code == '23505') {
-        // Postgres duplicate key violation code
         print('⚠️ Video already exists in the database. Skipping insert.');
       } else {
         print('❌ Supabase error [${e.code}]: ${e.message}');
@@ -39,6 +38,54 @@ class DatabaseService {
     } catch (e) {
       print('❌ Unexpected error fetching from Supabase: $e');
       return [];
+    }
+  }
+
+  // ── 2. NEW: Subscription & Notification Methods ──
+  
+  /// Updates or inserts a channel's subscription/notification status
+  Future<void> updateSubscription({
+    required String channelName, 
+    required bool isSubscribed, 
+    required bool notificationsEnabled
+  }) async {
+    try {
+      await supabase.from('channel_subscriptions').upsert({
+        'channel_name': channelName,
+        'is_subscribed': isSubscribed,
+        'notifications_enabled': notificationsEnabled,
+      });
+      print('✅ Subscription updated for $channelName');
+    } catch (e) {
+      print('❌ Error updating subscription: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetches the current status for a specific channel
+  Future<Map<String, dynamic>?> getSubscriptionStatus(String channelName) async {
+    try {
+      final response = await supabase
+          .from('channel_subscriptions')
+          .select()
+          .eq('channel_name', channelName)
+          .maybeSingle(); // Returns null if not found
+      return response;
+    } catch (e) {
+      print('❌ Error fetching subscription status: $e');
+      return null;
+    }
+  }
+
+  // 🔥 NEW: Mark a video as viewed
+  Future<void> markAsViewed(String videoId) async {
+    try {
+      await supabase
+          .from('youtube_summaries')
+          .update({'is_viewed': true})
+          .eq('video_id', videoId);
+    } catch (e) {
+      print('❌ Error marking as viewed: $e');
     }
   }
 }

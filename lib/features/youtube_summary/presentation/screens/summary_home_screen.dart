@@ -21,13 +21,10 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
     super.dispose();
   }
 
-  // The function that runs when the user pulls down to refresh
   Future<void> _handleRefresh() async {
     if (_urlController.text.isNotEmpty) {
-      // Re-fetch the summary if a URL is already in the box
       await ref.read(summaryProvider.notifier).summarize(_urlController.text);
     } else {
-      // If the box is empty, just show the loading spinner for 1 second for good UX
       await Future.delayed(const Duration(seconds: 1));
     }
   }
@@ -40,11 +37,9 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
       appBar: AppBar(
         title: const Text('TubeSum'),
       ),
-      // 🔥 NEW: Wrapped in RefreshIndicator 🔥
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
         child: SingleChildScrollView(
-          // 🔥 NEW: Forced physics so pull-to-refresh works even on short screens 🔥
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
@@ -93,6 +88,8 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                   channelName: state.summary!.channelName,
                   summary: state.summary!.summaryText,
                   fullTranscript: state.summary!.fullTranscript,
+                  videoUrl: state.summary!.videoUrl,
+                  videoId: state.summary!.videoId, // 🔥 NEW: Passing the URL to the card
                 ),
                 
               const InfoTipCard(),

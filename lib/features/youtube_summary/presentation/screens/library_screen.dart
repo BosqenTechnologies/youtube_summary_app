@@ -74,14 +74,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       final thumbnailUrl = item['thumbnail_url'] ?? 
                           (videoId != null ? 'https://img.youtube.com/vi/$videoId/0.jpg' : '');
                           
+                      // 🔥 Fetch status, default to true for old data so it doesn't all glow
+                      final isViewed = item['is_viewed'] ?? true;
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: SummaryResultCard(
+                          videoId: videoId ?? '', // 🔥 Pass video ID
                           thumbnailUrl: thumbnailUrl,
                           title: item['title'] ?? 'Unknown Title',
                           channelName: item['channel_name'] ?? 'Unknown Channel',
                           summary: item['summary'] ?? '',
                           fullTranscript: item['transcript'] ?? '',
+                          videoUrl: item['video_url'] ?? '',
+                          isViewed: isViewed, // 🔥 Pass status
+                          onViewed: () async {
+                            // 🔥 When user clicks view, update DB and refresh UI
+                            if (videoId != null) {
+                              await _databaseService.markAsViewed(videoId);
+                              _fetchSummaries();
+                            }
+                          },
                         ),
                       );
                     },

@@ -18,8 +18,10 @@ class UrlInputCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // This stretches the button to full width for a better mobile UI
+          crossAxisAlignment: CrossAxisAlignment.stretch, 
           children: [
+            // 1. The Text Input Field (Now takes up the whole width)
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -42,22 +44,33 @@ class UrlInputCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ElevatedButton(
-                    onPressed: onSummarize,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text('Summarize'),
-                  ),
-                  const SizedBox(width: 8),
                 ],
               ),
             ),
+            
+            const SizedBox(height: 16), // Spacing between input and button
+            
+            // 2. The Summarize Button (Now below the input)
+            ElevatedButton(
+              onPressed: onSummarize,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14), // Made slightly taller for better tap area
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Summarize',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            
             const SizedBox(height: 12),
+            
+            // 3. The Hint Text
             const Text(
               'Paste a YouTube URL to generate a summary.',
+              textAlign: TextAlign.center, // Centered to match the new layout
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,

@@ -12,6 +12,8 @@ class VideoSummary {
   final String thumbnailUrl;
   final String summaryText;
   final String fullTranscript;
+  final String videoUrl;
+  final String videoId;
 
   VideoSummary({
     required this.title,
@@ -19,6 +21,8 @@ class VideoSummary {
     required this.thumbnailUrl,
     required this.summaryText,
     required this.fullTranscript,
+    required this.videoUrl,
+    required this.videoId,
   });
 }
 
@@ -92,6 +96,8 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
               ? '${transcript.substring(0, 300)}...'
               : transcript),
           fullTranscript: transcript,
+          videoUrl: videoData['video_url'] ?? url,
+          videoId: videoData['video_id'],
         ),
       );
     } catch (e) {
