@@ -88,9 +88,9 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
           channelName: videoData['channel_name'],
           thumbnailUrl:
               'https://img.youtube.com/vi/${videoData['video_id']}/0.jpg',
-          summaryText: transcript.length > 300
+          summaryText: videoData['summary'] ?? (transcript.length > 300
               ? '${transcript.substring(0, 300)}...'
-              : transcript,
+              : transcript),
           fullTranscript: transcript,
         ),
       );

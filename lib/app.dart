@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/youtube_summary/presentation/screens/summary_home_screen.dart';
+import 'features/youtube_summary/presentation/screens/main_screen.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -11,7 +11,7 @@ class App extends StatelessWidget {
       title: 'TubeSum',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const SummaryHomeScreen(),
+      home: const MainScreen(),
     );
   }
 }

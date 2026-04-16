@@ -36,6 +36,7 @@ class YouTubeExtractionService {
         'title': data['title'],
         'channel_name': data['channel_name'],
         'transcript': data['transcript'],
+        'summary': data['summary'],
       };
       
     } catch (e) {
