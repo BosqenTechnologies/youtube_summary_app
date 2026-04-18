@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'library_screen.dart';
 import 'summary_home_screen.dart';
+// Keep the import for the subscriptions screen
+import 'subscriptions_screen.dart'; 
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,6 +23,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 🔥 FIX: I completely removed the extra AppBar here so they don't stack!
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,

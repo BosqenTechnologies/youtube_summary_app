@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../../data/services/database_service.dart';
 import '../widgets/summary_result_card.dart';
 
@@ -42,8 +43,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
         title: const Text('TubeSum'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchSummaries,
+            icon: const Icon(Icons.notifications_active, color: Colors.red),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SubscriptionsScreen()),
+              );
+            },
           ),
         ],
       ),

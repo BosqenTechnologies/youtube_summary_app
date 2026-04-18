@@ -3,18 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
+// 🔥 Adjust this import path if needed!
 import '../state/subscription_provider.dart';
 
 class SummaryResultCard extends ConsumerStatefulWidget {
-  final String videoId; // 🔥 NEW: Required to mark as viewed in DB
+  final String videoId;
   final String thumbnailUrl;
   final String title;
   final String channelName;
   final String summary;
   final String fullTranscript;
   final String videoUrl;
-  final bool isViewed; // 🔥 NEW: Controls the UI glow and badge
-  final VoidCallback? onViewed; // 🔥 NEW: Triggered when user views text
+  final bool isViewed;
+  final VoidCallback? onViewed;
 
   const SummaryResultCard({
     super.key,
@@ -25,7 +26,7 @@ class SummaryResultCard extends ConsumerStatefulWidget {
     required this.summary,
     required this.fullTranscript,
     required this.videoUrl,
-    this.isViewed = true, // Defaults to true so the "Add Link" screen doesn't glow
+    this.isViewed = true,
     this.onViewed,
   });
 
@@ -35,13 +36,7 @@ class SummaryResultCard extends ConsumerStatefulWidget {
 
 class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
   
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(subscriptionProvider.notifier).fetchStatus(widget.channelName);
-    });
-  }
+  // NOTE: Removed the initState fetch. The provider does it automatically now!
 
   Future<void> _launchYouTubeVideo() async {
     final Uri url = Uri.parse(widget.videoUrl);
@@ -55,7 +50,6 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
   }
 
   void _showFullText(BuildContext context, String sheetTitle, String content) {
-    // 🔥 Mark as viewed immediately when the user opens the bottom sheet
     if (!widget.isViewed && widget.onViewed != null) {
       widget.onViewed!();
     }
@@ -119,11 +113,11 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isSubscribed = ref.watch(subscriptionProvider)[widget.channelName] ?? false;
+    // 🔥 Watch the global state and check if this channel is in the Set
+    final isSubscribed = ref.watch(subscriptionProvider).contains(widget.channelName);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      // 🔥 Dynamic glowing border if it's a new video
       elevation: widget.isViewed ? 1 : 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -169,7 +163,6 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // 🔥 The NEW Badge
                           if (!widget.isViewed)
                             Container(
                               margin: const EdgeInsets.only(left: 8),
@@ -195,14 +188,23 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 16),
 
             // ── 2. Dynamic Subscribe Button ──
             Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName),
+                  // 🔥 Tell the brain to toggle it
+                  onPressed: () async {
+                    try {
+                      await ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName);
+                    } catch(e) {
+                      if(context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                      }
+                    }
+                  },
                   icon: Icon(
                     isSubscribed ? Icons.check_circle : Icons.subscriptions, 
                     size: 18

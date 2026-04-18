@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../state/summary_provider.dart';
 import '../widgets/url_input_card.dart';
 import '../widgets/summary_result_card.dart';
@@ -36,6 +37,17 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('TubeSum'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_active, color: Colors.red),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SubscriptionsScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
