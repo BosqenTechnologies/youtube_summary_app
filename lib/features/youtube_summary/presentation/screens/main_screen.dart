@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'library_screen.dart';
 import 'summary_home_screen.dart';
-// Keep the import for the subscriptions screen
-import 'subscriptions_screen.dart'; 
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,7 +11,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  int _currentIndex = 1; // Default to Add Link screen as per standard behavior
 
   final List<Widget> _screens = [
     const LibraryScreen(),
@@ -23,30 +21,61 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 🔥 FIX: I completely removed the extra AppBar here so they don't stack!
+      backgroundColor: AppColors.background,
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        selectedItemColor: AppColors.primaryBlue,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_books),
-            label: 'Vault',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_link),
-            label: 'Add Link',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            )
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          backgroundColor: Colors.white,
+          selectedItemColor: AppColors.primaryRed,
+          unselectedItemColor: AppColors.textSecondary,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.inventory_2_outlined),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.inventory_2),
+              ),
+              label: 'VAULT',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.add_circle_outline),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.add_circle),
+              ),
+              label: 'ADD LINK',
+            ),
+          ],
+        ),
       ),
     );
   }

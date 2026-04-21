@@ -4,6 +4,9 @@ import 'package:youtube_summary_app/features/auth_screen/presentation/screens/au
 import 'core/theme/app_theme.dart';
 import 'features/youtube_summary/presentation/screens/main_screen.dart';
 
+// Import your constants
+import 'core/constants/app_strings.dart';
+import 'core/constants/app_colors.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -11,39 +14,78 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'TubeSum',
+      title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // 🔥 CHANGED: Point home to AuthGate instead of MainScreen directly
       home: const AuthGate(), 
     );
   }
 }
 
-// 🔥 NEW: The AuthGate automatically switches screens based on login status
-class AuthGate extends StatelessWidget {
+// 🔥 UPDATED: AuthGate is now a StatefulWidget that forces a server check
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<AuthState>(
-      // Listen to Supabase auth state changes in real-time
-      stream: Supabase.instance.client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        // Show a loading spinner while checking status
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
+  State<AuthGate> createState() => _AuthGateState();
+}
 
-        // Check if we have an active session
+class _AuthGateState extends State<AuthGate> {
+  final supabase = Supabase.instance.client;
+  bool _isVerifying = true; // Shows loading screen until server responds
+
+  @override
+  void initState() {
+    super.initState();
+    _verifyUserStatus();
+  }
+
+  Future<void> _verifyUserStatus() async {
+    final session = supabase.auth.currentSession;
+
+    // If there is a cached session on the device, double-check it with the server
+    if (session != null) {
+      try {
+        // 🚨 CRITICAL: This pings the server. It fails if the user was deleted.
+        await supabase.auth.getUser();
+      } catch (e) {
+        // The token is invalid or the user was deleted. 
+        // Force sign out to destroy the local cache.
+        await supabase.auth.signOut();
+      }
+    }
+    
+    // Stop loading once the check is done
+    if (mounted) {
+      setState(() {
+        _isVerifying = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Show a loader while talking to the Supabase server
+    if (_isVerifying) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primaryRed),
+        ),
+      );
+    }
+
+    // 2. Once verified, listen to the real-time auth stream
+    return StreamBuilder<AuthState>(
+      stream: supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
         final session = snapshot.hasData ? snapshot.data!.session : null;
 
         if (session != null) {
-          // User IS logged in! Show your main dashboard.
+          // User IS logged in and verified! Show main dashboard.
           return const MainScreen(); 
         }
 
-        // User is NOT logged in. Show the login screen.
+        // User is NOT logged in or their cache was just wiped. Show login screen.
         return const AuthScreen();
       },
     );
