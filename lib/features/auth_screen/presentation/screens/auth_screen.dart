@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:youtube_summary_app/core/constants/app_colors.dart';
+// Colors now come from ThemeData to keep UI adaptive across light/dark modes
 import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
 import 'package:youtube_summary_app/core/constants/app_strings.dart';
 
@@ -54,15 +54,15 @@ class _AuthScreenState extends State<AuthScreen> {
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: AppColors.errorRed),
+          SnackBar(content: Text(errorMessage), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(AppStrings.unexpectedError),
-              backgroundColor: AppColors.errorRed),
+          SnackBar(
+              content: const Text(AppStrings.unexpectedError),
+              backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     } finally {
@@ -83,14 +83,16 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.authBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: _isSignUp 
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryRed),
+                icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary),
                 onPressed: () {
                   setState(() {
                     _isSignUp = false;
@@ -99,10 +101,10 @@ class _AuthScreenState extends State<AuthScreen> {
               )
             : null,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           AppStrings.appName,
           style: TextStyle(
-            color: AppColors.primaryRed,
+            color: theme.colorScheme.primary,
             fontSize: AppDimensions.fontTitleMedium,
             fontWeight: FontWeight.w900,
             letterSpacing: -0.5,
@@ -119,31 +121,31 @@ class _AuthScreenState extends State<AuthScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_isSignUp) ...[
-                const Text(
+                Text(
                   AppStrings.createAccount,
                   style: TextStyle(
                     fontSize: AppDimensions.fontTitleLarge,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
+                    color: theme.colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppDimensions.spacingSmall),
-                const Text(
+                Text(
                   AppStrings.joinRevolution,
                   style: TextStyle(
                     fontSize: AppDimensions.fontNormal,
-                    color: AppColors.textSubtext,
+                    color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
                 const SizedBox(height: AppDimensions.spacingMedium),
-                const Text(
+                Text(
                   AppStrings.welcomeBack,
                   style: TextStyle(
                     fontSize: AppDimensions.fontNormal,
-                    color: AppColors.textSubtext,
+                    color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -172,14 +174,14 @@ class _AuthScreenState extends State<AuthScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        AppStrings.forgotPassword,
-                        style: TextStyle(
-                          fontSize: AppDimensions.fontTiny,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryRed,
-                        ),
-                      ),
+                          child: Text(
+                            AppStrings.forgotPassword,
+                            style: TextStyle(
+                              fontSize: AppDimensions.fontTiny,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
                     ),
                 ],
               ),
@@ -194,11 +196,11 @@ class _AuthScreenState extends State<AuthScreen> {
               
               if (_isSignUp) ...[
                 const SizedBox(height: AppDimensions.spacingSmall),
-                const Text(
+                Text(
                   AppStrings.passwordConstraint,
                   style: TextStyle(
                     fontSize: AppDimensions.fontTiny, 
-                    color: AppColors.textSubtext
+                    color: theme.textTheme.bodySmall?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -210,19 +212,19 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _authenticate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    foregroundColor: AppColors.textLight,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                     ),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: AppDimensions.progressIndicatorSize,
                           width: AppDimensions.progressIndicatorSize,
                           child: CircularProgressIndicator(
-                            color: AppColors.textLight,
+                            color: theme.colorScheme.onPrimary,
                             strokeWidth: AppDimensions.progressIndicatorStroke,
                           ),
                         )
@@ -251,8 +253,8 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   Text(
                     _isSignUp ? AppStrings.alreadyHaveAccount : AppStrings.needAccount,
-                    style: const TextStyle(
-                      color: AppColors.textSubtext, 
+                    style: TextStyle(
+                      color: theme.textTheme.bodySmall?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7), 
                       fontSize: AppDimensions.fontSmall
                     ),
                   ),
@@ -264,8 +266,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     },
                     child: Text(
                       _isSignUp ? AppStrings.signIn : AppStrings.signUp,
-                      style: const TextStyle(
-                        color: AppColors.primaryRed,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: AppDimensions.fontSmall,
                       ),
@@ -281,13 +283,14 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildInputLabel(String text) {
+    final theme = Theme.of(context);
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: AppDimensions.fontTiny,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
-        color: AppColors.textLabel,
+        color: theme.textTheme.labelSmall?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7),
       ),
     );
   }
@@ -300,26 +303,27 @@ class _AuthScreenState extends State<AuthScreen> {
     bool isPassword = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final theme = Theme.of(context);
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: AppDimensions.fontNormal, 
-        color: AppColors.textDark
+        color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface,
       ),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: AppColors.inputHintColor, 
+        hintStyle: TextStyle(
+          color: theme.inputDecorationTheme.hintStyle?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6), 
           fontSize: AppDimensions.fontNormal
         ),
-        prefixIcon: Icon(prefixIcon, color: AppColors.inputIconColor),
+        prefixIcon: Icon(prefixIcon, color: theme.iconTheme.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6)),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: AppColors.inputIconColor,
+                  color: theme.iconTheme.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 onPressed: () {
                   setState(() {
@@ -329,7 +333,7 @@ class _AuthScreenState extends State<AuthScreen> {
               )
             : null,
         filled: true,
-        fillColor: AppColors.inputFillColor,
+        fillColor: theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
           vertical: AppDimensions.paddingNormal
         ),
@@ -343,8 +347,8 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
-          borderSide: const BorderSide(
-            color: AppColors.primaryRed, 
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary, 
             width: AppDimensions.borderWidth
           ),
         ),

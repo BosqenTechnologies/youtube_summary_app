@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+
+// UI uses Theme.of(context) so colors follow active theme
 
 class UrlInputCard extends StatelessWidget {
   final VoidCallback onSummarize;
@@ -13,10 +14,12 @@ class UrlInputCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -25,17 +28,17 @@ class UrlInputCard extends StatelessWidget {
           // URL Input Field
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6), // Light grey input background
+              color: theme.inputDecorationTheme.fillColor ?? const Color(0xFFF3F4F6), // Use theme input fill if available
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
               controller: controller,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'https://www.youtube.com/watch...',
-                hintStyle: TextStyle(color: Colors.blueGrey, fontSize: 14),
-                prefixIcon: Icon(Icons.link, color: Colors.blueGrey),
+                hintStyle: TextStyle(color: theme.hintColor, fontSize: 14),
+                prefixIcon: Icon(Icons.link, color: theme.hintColor),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
           ),
@@ -48,8 +51,8 @@ class UrlInputCard extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onSummarize,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 
 class InfoTipCard extends StatelessWidget {
   const InfoTipCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.infoBackground.withValues(alpha: 0.5),
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.lightbulb_outline,
-            color: AppColors.accentYellow,
+            color: theme.colorScheme.secondary,
             size: 32,
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Text(
               'Get instant summaries of YouTube videos for quick insights.',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),

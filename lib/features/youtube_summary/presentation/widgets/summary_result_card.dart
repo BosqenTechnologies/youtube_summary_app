@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/full_summary_screen.dart';
-import '../../../../core/constants/app_colors.dart';
+// AppColors no longer used here — rely on Theme
 import '../state/subscription_provider.dart';
 
 class SummaryResultCard extends ConsumerStatefulWidget {
@@ -76,15 +76,16 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isSubscribed = ref.watch(subscriptionProvider).contains(widget.channelName);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           if (!widget.isViewed) // Highlight new items
-            BoxShadow(color: AppColors.primaryRed.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
+            BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
         ],
       ),
       child: Column(
@@ -110,7 +111,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: AppColors.primaryRed, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(6)),
                     child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -125,7 +126,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                 // 2. Title
                 Text(
                   widget.title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold) ?? const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -137,13 +138,13 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   children: [
                     Text(
                       widget.channelName.toUpperCase(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textGrey, letterSpacing: 0.5),
+                      style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5, fontWeight: FontWeight.w600) ?? const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                     ),
                     InkWell(
                       onTap: () => ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName),
                       child: Icon(
                         isSubscribed ? Icons.check_circle : Icons.add_circle_outline,
-                        color: isSubscribed ? Colors.green : AppColors.textGrey,
+                        color: isSubscribed ? Colors.green : theme.textTheme.labelSmall?.color,
                         size: 20,
                       ),
                     ),
@@ -158,8 +159,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       child: ElevatedButton(
                         onPressed: () => _openFullSummary(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryRed,
-                          foregroundColor: Colors.white,
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -179,8 +180,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       child: ElevatedButton(
                         onPressed: () => _openTranscript(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.buttonGrey,
-                          foregroundColor: AppColors.textDark,
+                          backgroundColor: theme.cardColor,
+                          foregroundColor: theme.colorScheme.onSurface,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

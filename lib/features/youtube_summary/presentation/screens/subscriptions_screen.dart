@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // 🔥 Adjust these import paths to match your project structure!
 import '../state/subscription_provider.dart';
-import '../../../../core/constants/app_colors.dart';
+// AppColors usages replaced with Theme.of(context) so UI follows active theme
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_dimensions.dart';
 
@@ -71,26 +71,28 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
       return channelName.contains(_searchQuery.toLowerCase());
     }).toList();
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         // The framework automatically provides the Back Arrow here
-        iconTheme: const IconThemeData(color: AppColors.textDark),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           AppStrings.appName,
           style: TextStyle(
-            color: AppColors.primaryRed,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w900,
             fontSize: 22,
             letterSpacing: -0.5,
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryRed))
+        body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
           : Column(
               children: [
                 // 1. Header Section
@@ -103,39 +105,31 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
+                      Text(
                         AppStrings.manageSubscriptions,
-                        style: TextStyle(
-                          fontSize: 28, // Scaled down slightly to fit small screens better
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
-                          letterSpacing: -0.5,
-                        ),
+                        style: theme.textTheme.headlineSmall?.copyWith(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface) ?? const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: AppDimensions.spacingSmall),
-                      const Text(
+                      Text(
                         AppStrings.manageSubsSubtitle,
-                        style: TextStyle(
-                          fontSize: AppDimensions.fontNormal,
-                          color: AppColors.textGrey,
-                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(fontSize: AppDimensions.fontNormal, color: theme.textTheme.bodyMedium?.color) ?? const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: AppDimensions.spacingLarge),
                       
                       // 2. Search Bar
                       Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6), // Light grey input background
+                          color: theme.inputDecorationTheme.fillColor ?? const Color(0xFFF3F4F6), // Light grey input background (theme-aware)
                           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
                         ),
                         child: TextField(
                           controller: _searchController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             hintText: AppStrings.searchChannels,
-                            hintStyle: TextStyle(color: Colors.blueGrey, fontSize: 16),
-                            prefixIcon: Icon(Icons.search, color: Colors.blueGrey),
+                            hintStyle: TextStyle(color: theme.hintColor, fontSize: 16),
+                            prefixIcon: Icon(Icons.search, color: theme.hintColor),
                             border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                         ),
                       ),
@@ -173,15 +167,16 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
 
   // Helper method to build the new premium Channel Card
   Widget _buildChannelCard(String channelName, bool isSubscribed, BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16), // Slightly tighter internal padding
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -217,11 +212,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
               children: [
                 Text(
                   channelName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                    color: AppColors.textDark,
-                  ),
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 15, color: theme.colorScheme.onSurface) ?? const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -266,8 +257,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
             height: 36, // Force a compact height for the button
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: isSubscribed ? AppColors.buttonGrey : AppColors.primaryRed,
-                foregroundColor: isSubscribed ? AppColors.textDark : Colors.white,
+                backgroundColor: isSubscribed ? theme.cardColor : theme.colorScheme.primary,
+                foregroundColor: isSubscribed ? theme.colorScheme.onSurface : theme.colorScheme.onPrimary,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(horizontal: 12), // Reduced horizontal padding
                 shape: RoundedRectangleBorder(
@@ -308,25 +299,25 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
         margin: const EdgeInsets.only(top: 8, bottom: 32),
         padding: const EdgeInsets.symmetric(vertical: 24),
         decoration: BoxDecoration(
-          color: AppColors.primaryRed.withOpacity(0.02),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
           border: Border.all(
-            color: AppColors.primaryRed.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.add_circle,
-              color: AppColors.primaryRed,
+              color: Theme.of(context).colorScheme.primary,
               size: 28,
             ),
             const SizedBox(height: 8),
             Text(
               AppStrings.addNewChannel,
-              style: TextStyle(
-                color: AppColors.primaryRed.withOpacity(0.9),
+                style: TextStyle(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
               ),

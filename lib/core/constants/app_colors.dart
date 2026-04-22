@@ -1,38 +1,49 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors (Existing)
-  static const Color primaryBlue = Color(0xFF2196F3);
-  static const Color secondaryBlue = Color(0xFF1976D2);
-  static const Color darkBlue = Color(0xFF0D47A1);
+  // --- BRAND COLORS ---
+  // A refined, deeper red for light mode, and a brighter red for dark mode contrast
+  static const Color primaryRedLight = Color(0xFFBC0100); 
+  static const Color primaryRedDark = Color(0xFFFF0000); 
+  static const Color primaryContainer = Color(0xFFEB0000); // Used for gradients
 
-  // Brand Red (Added for TubeSum)
-  static const Color primaryRed = Color(0xFFD30000);
-  static const Color errorRed = Colors.red;
-
-  // Backgrounds
-  static const Color background = Color(0xFFE3F2FD);
-  static const Color cardBackground = Colors.white;
-  static const Color infoBackground = Color(0xFFECEFF1);
-  static const Color authBackground = Color(0xFFF8F9FA);
+  // --- LIGHT THEME (The Editorial Intelligence) ---
+  static const Color lightSurface = Color(0xFFF7F9FB); // Cool, breathable light gray
+  static const Color lightSurfaceContainerLow = Color(0xFFF2F4F6); // Sectioning
+  static const Color lightSurfaceContainerLowest = Color(0xFFFFFFFF); // Actionable Cards
+  static const Color lightOnSurface = Color(0xFF191C1E); // Sophisticated dark slate text
+  static const Color lightSecondaryTonal = Color(0xFF515F74); // Meta-information
+  static const Color lightOutlineVariant = Color(0x26EBBBB4); // Ghost border (~15% opacity)
   
-  // Input Fields & UI Elements
-  static const Color inputFillColor = Color(0xFFECEFF1); // Equivalent to blueGrey[50]
-  static const Color inputHintColor = Color(0xFF90A4AE); // Equivalent to blueGrey[300]
-  static const Color inputIconColor = Color(0xFF78909C); // Equivalent to blueGrey[400]
-  
-  // Text
-  static const Color textPrimary = Color(0xFF263238);
-  static const Color textSecondary = Color(0xFF546E7A);
-  static const Color textLight = Colors.white;
-  static const Color textDark = Colors.black87;
-  static const Color textSubtext = Color(0xFF546E7A); // Equivalent to blueGrey[600]
-  static const Color textLabel = Color(0xFF37474F); // Equivalent to blueGrey[800]
+  // --- DARK THEME (Derived from Redline Brief Aesthetic) ---
+  static const Color darkSurface = Color(0xFF121212); // Deep dark background
+  static const Color darkSurfaceContainerLow = Color(0xFF1E1E1E); // Sectioning
+  static const Color darkSurfaceContainerLowest = Color(0xFF242424); // Actionable Cards
+  static const Color darkOnSurface = Color(0xFFE2E2E2); // Off-white text for readability
+  static const Color darkSecondaryTonal = Color(0xFFA0AAB9); // Muted gray for meta
+  static const Color darkOutlineVariant = Color(0x26FFFFFF); // Ghost border dark
 
-  // Accents
+  // --- SHARED UTILITY ---
+  static const Color errorRed = Colors.redAccent;
   static const Color accentYellow = Color(0xFFFFD54F);
-  static const Color divider = Color(0xFFCFD8DC);
-// Off-white background
-  static const Color textGrey = Color(0xFF666666);
-  static const Color buttonGrey = Color(0xFFE5E7EB);
+
+  // --- BACKWARDS-COMPATIBILITY ALIASES ---
+  // Several UI files still reference older AppColors names. These aliases
+  // keep those files working while preserving the new, clearer color names.
+  static const Color primaryRed = primaryRedLight;
+  static const Color background = lightSurface;
+  static const Color cardBackground = lightSurfaceContainerLowest;
+  static const Color buttonGrey = lightSurfaceContainerLow;
+  static const Color textDark = lightOnSurface;
+  static const Color textGrey = lightSecondaryTonal;
+  static const Color textSecondary = lightSecondaryTonal;
+  static const Color infoBackground = accentYellow;
+  // --- Additional legacy names used across the app (auth + inputs)
+  static const Color authBackground = lightSurface;
+  static const Color textSubtext = lightSecondaryTonal;
+  static const Color textLight = Color(0xFFFFFFFF);
+  static const Color textLabel = lightSecondaryTonal;
+  static const Color inputHintColor = lightSecondaryTonal;
+  static const Color inputIconColor = lightSecondaryTonal;
+  static const Color inputFillColor = lightSurfaceContainerLow;
 }

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_summary_app/core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youtube_summary_app/core/theme/theme_provider.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../../data/services/database_service.dart';
 import '../widgets/summary_result_card.dart';
 
-class LibraryScreen extends StatefulWidget {
+class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
 
   @override
-  State<LibraryScreen> createState() => _LibraryScreenState();
+  ConsumerState<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> {
+class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final _databaseService = DatabaseService();
   List<Map<String, dynamic>> _savedSummaries = [];
   bool _isLoading = true;
@@ -35,20 +36,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         // leading: IconButton(
         //   icon: const Icon(Icons.menu, color: AppColors.primaryRed),
         //   onPressed: () {}, 
         // ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'TubeSum',
           style: TextStyle(
-            color: AppColors.primaryRed,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w900,
             fontSize: 22,
             letterSpacing: -0.5,
@@ -56,7 +59,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: AppColors.primaryRed),
+            icon: Icon(Icons.notifications, color: theme.colorScheme.primary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -64,10 +67,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
               );
             },
           ),
+          IconButton(
+            icon: Icon(
+              // Change icon based on current theme
+              Theme.of(context).brightness == Brightness.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: () {
+              // 🔥 Tell the provider to toggle the theme
+              ref.read(themeModeProvider.notifier).toggleTheme();
+            },
+          ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryRed))
+          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
           : _savedSummaries.isEmpty
               ? Center(
                   child: Column(
@@ -82,9 +98,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ],
                   ),
                 )
-              : RefreshIndicator(
+                : RefreshIndicator(
                   onRefresh: _fetchSummaries,
-                  color: AppColors.primaryRed,
+                  color: theme.colorScheme.primary,
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     itemCount: _savedSummaries.length,
@@ -93,14 +109,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Your Vault',
-                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Previously summarized insights.',
-                              style: TextStyle(fontSize: 14, color: AppColors.textGrey),
+                              style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
                             ),
                             const SizedBox(height: 24),
                             _buildListItem(index),

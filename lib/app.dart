@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 Required for ConsumerWidget
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:youtube_summary_app/features/auth_screen/presentation/screens/auth_screen.dart';
 import 'core/theme/app_theme.dart';
@@ -6,23 +7,32 @@ import 'features/youtube_summary/presentation/screens/main_screen.dart';
 
 // Import your constants
 import 'core/constants/app_strings.dart';
-import 'core/constants/app_colors.dart';
+import 'core/theme/theme_provider.dart'; // 🔥 Import the new theme provider
 
-class App extends StatelessWidget {
+// 🔥 CHANGED: App is now a ConsumerWidget so it can listen to theme changes
+class App extends ConsumerWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 🔥 Watch the current theme mode (Light, Dark, or System)
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
+      
+      // 🔥 Apply the themes dynamically here
+      themeMode: themeMode,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      
       home: const AuthGate(), 
     );
   }
 }
 
-// 🔥 UPDATED: AuthGate is now a StatefulWidget that forces a server check
+// AuthGate is a StatefulWidget that forces a server check
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -67,9 +77,11 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     // 1. Show a loader while talking to the Supabase server
     if (_isVerifying) {
-      return const Scaffold(
+      final theme = Theme.of(context);
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primaryRed),
+          // Theme-aware loader
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
       );
     }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; // 🔥 Added Supabase import for logout
-import 'package:youtube_summary_app/core/constants/app_colors.dart';
+// Use Theme.of(context) instead of AppColors so UI follows active theme
 import 'package:youtube_summary_app/core/constants/app_strings.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../state/summary_provider.dart';
@@ -37,25 +37,26 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final theme = Theme.of(context);
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
+          title: Text(
             'Logout',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
+            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
-          content: const Text(
+          content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 16),
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.8), fontSize: 16),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(), // Close dialog
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey, fontWeight: FontWeight.bold)),
+              child: Text('Cancel', style: TextStyle(color: theme.textTheme.bodyMedium?.color ?? theme.colorScheme.onSurface.withValues(alpha: 0.8), fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -75,21 +76,22 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(summaryProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         // leading: IconButton(
         //   icon: const Icon(Icons.menu, color: AppColors.primaryRed),
         //   onPressed: () {}, // Optional drawer logic later
         // ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'TubeSum',
           style: TextStyle(
-            color: AppColors.primaryRed,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w900,
             fontSize: 22,
             letterSpacing: -0.5,
@@ -98,11 +100,11 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
         actions: [
           // 🔥 NEW: Logout Button
           IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.primaryRed),
+            icon: Icon(Icons.logout, color: theme.colorScheme.primary),
             onPressed: () => _showLogoutDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications, color: AppColors.primaryRed),
+            icon: Icon(Icons.notifications, color: theme.colorScheme.primary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -114,7 +116,7 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
-        color: AppColors.primaryRed,
+        color: theme.colorScheme.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
@@ -122,24 +124,16 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
-              const Text(
+              Text(
                 AppStrings.distillNoise,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+                style: theme.textTheme.headlineSmall?.copyWith(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface) ?? TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 AppStrings.distillSubtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textGrey,
-                  height: 1.4,
-                ),
+                style: theme.textTheme.bodyMedium?.copyWith(fontSize: 16, color: theme.textTheme.bodyMedium?.color, height: 1.4) ?? TextStyle(fontSize: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.8), height: 1.4),
               ),
               const SizedBox(height: 32),
 
@@ -179,10 +173,10 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
 
               // Loading State
               if (state.isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primaryRed),
+                    child: CircularProgressIndicator(color: theme.colorScheme.primary),
                   ),
                 ),
 
@@ -223,33 +217,27 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
   }
 
   Widget _buildFeatureCard({required IconData icon, required String title, required String description}) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primaryRed, size: 28),
+          Icon(icon, color: theme.colorScheme.primary, size: 28),
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface) ?? const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textGrey,
-              height: 1.4,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14, color: theme.textTheme.bodyMedium?.color, height: 1.4) ?? const TextStyle(fontSize: 14, height: 1.4),
           ),
         ],
       ),
