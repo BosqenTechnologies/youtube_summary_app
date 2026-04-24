@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// 🔥 Adjust these import paths to match your project structure!
 import '../state/subscription_provider.dart';
-// AppColors usages replaced with Theme.of(context) so UI follows active theme
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_dimensions.dart';
 
@@ -28,7 +26,6 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     super.initState();
     _fetchChannels();
     
-    // Add listener to the search bar to filter channels locally
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text;
@@ -42,7 +39,6 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     super.dispose();
   }
 
-  // We only fetch the list of available channels here. The Provider handles the status!
   Future<void> _fetchChannels() async {
     try {
       final channelsData = await supabase.from('channels').select();
@@ -65,10 +61,13 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     // 🔥 Watch the global state!
     final subscribedChannels = ref.watch(subscriptionProvider);
 
-    // Apply local search filter
+    // 🔥 FIX: Apply local search filter AND ensure it only shows SUBSCRIBED channels
     final filteredChannels = _channels.where((channel) {
-      final channelName = channel['channel_name'].toString().toLowerCase();
-      return channelName.contains(_searchQuery.toLowerCase());
+      final channelName = channel['channel_name'].toString();
+      final matchesSearch = channelName.toLowerCase().contains(_searchQuery.toLowerCase());
+      final isSubscribed = subscribedChannels.contains(channelName);
+      
+      return matchesSearch && isSubscribed; 
     }).toList();
 
     final theme = Theme.of(context);
@@ -78,7 +77,6 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        // The framework automatically provides the Back Arrow here
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         centerTitle: true,
         title: Text(
@@ -119,7 +117,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                       // 2. Search Bar
                       Container(
                         decoration: BoxDecoration(
-                          color: theme.inputDecorationTheme.fillColor ?? const Color(0xFFF3F4F6), // Light grey input background (theme-aware)
+                          color: theme.inputDecorationTheme.fillColor ?? const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
                         ),
                         child: TextField(
@@ -141,10 +139,10 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingNormal, // Reduced from Large to give more width to cards
+                      horizontal: AppDimensions.paddingNormal,
                       vertical: AppDimensions.paddingSmall,
                     ),
-                    itemCount: filteredChannels.length + 1, // +1 for the Add button at the bottom
+                    itemCount: filteredChannels.length + 1, 
                     itemBuilder: (context, index) {
                       
                       // Render the "Add New Channel" button at the very bottom
@@ -165,12 +163,12 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     );
   }
 
-  // Helper method to build the new premium Channel Card
+  // Premium Channel Card
   Widget _buildChannelCard(String channelName, bool isSubscribed, BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16), // Slightly tighter internal padding
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16), 
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
@@ -184,12 +182,11 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
       ),
       child: Row(
         children: [
-          // Dark rounded avatar 
           Container(
-            width: 48, // Reduced from 56 to save horizontal space
+            width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B), // Dark slate color
+              color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
@@ -203,9 +200,8 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12), // Reduced spacing
+          const SizedBox(width: 12),
           
-          // Title and Subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,23 +247,22 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
             ),
           ),
           
-          // Action Button
           const SizedBox(width: 8),
           SizedBox(
-            height: 36, // Force a compact height for the button
+            height: 36,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSubscribed ? theme.cardColor : theme.colorScheme.primary,
                 foregroundColor: isSubscribed ? theme.colorScheme.onSurface : theme.colorScheme.onPrimary,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12), // Reduced horizontal padding
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               onPressed: () async {
                 try {
-                  // Tell the Brain to toggle it
+                  // Toggle sync with Vault!
                   await ref.read(subscriptionProvider.notifier).toggleSubscription(channelName);
                 } catch (e) {
                   if (context.mounted) {
@@ -278,7 +273,7 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
               child: Text(
                 isSubscribed ? 'Unsubscribe' : 'Subscribe',
                 style: TextStyle(
-                  fontSize: 13, // Scaled text down slightly
+                  fontSize: 13,
                   fontWeight: isSubscribed ? FontWeight.w600 : FontWeight.bold,
                 ),
               ),
@@ -289,7 +284,6 @@ class _SubscriptionsScreenState extends ConsumerState<SubscriptionsScreen> {
     );
   }
 
-  // Helper method to build the bottom "Add Channel" dashed container
   Widget _buildAddChannelButton() {
     return GestureDetector(
       onTap: () {

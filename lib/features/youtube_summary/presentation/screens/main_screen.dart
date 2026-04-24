@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'library_screen.dart';
 import 'summary_home_screen.dart';
+import 'channel_screen.dart'; // 🔥 ADDED: Import your new channel screen
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -12,9 +13,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 1; // Default to Add Link screen as per standard behavior
 
+  // 🔥 ADDED: Added ChannelsScreen to the list of screens
   final List<Widget> _screens = [
     const LibraryScreen(),
     const SummaryHomeScreen(),
+    const ChannelsScreen(), 
   ];
 
   @override
@@ -74,6 +77,18 @@ class _MainScreenState extends State<MainScreen> {
                 child: Icon(Icons.add_circle),
               ),
               label: 'ADD LINK',
+            ),
+            // 🔥 ADDED: Channels Tab Item
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.subscriptions_outlined),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: Icon(Icons.subscriptions),
+              ),
+              label: 'CHANNELS',
             ),
           ],
         ),

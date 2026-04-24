@@ -37,7 +37,10 @@ class SubscriptionNotifier extends StateNotifier<Set<String>> {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) throw Exception("Please log in to subscribe");
 
-    final safeTopicName = 'channel_${channelName.replaceAll(' ', '')}';
+    // 🔥 CRITICAL FIX: Make topic name 100% safe (lowercase, no spaces, no special chars)
+    final cleanName = channelName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
+    final safeTopicName = 'channel_$cleanName';
+    
     final isSubscribed = state.contains(channelName);
 
     // Optimistic UI Update: Instantly change the button color in the app
@@ -48,18 +51,31 @@ class SubscriptionNotifier extends StateNotifier<Set<String>> {
     }
 
     try {
-      // Look up the channel ID from the database using the name
-      final channelResp = await supabase.from('channels').select('id').eq('channel_name', channelName).single();
+      // Use maybeSingle() to avoid PGRST116 crash!
+      var channelResp = await supabase.from('channels').select('id').eq('channel_name', channelName).maybeSingle();
+      
+      // If channel doesn't exist in the main table yet, create it safely
+      if (channelResp == null) {
+        channelResp = await supabase.from('channels').insert({'channel_name': channelName}).select('id').single();
+      }
       final channelId = channelResp['id'];
+
+      // SYNC WITH PYTHON BACKEND: Ensure channel_subscriptions table knows about this!
+      await supabase.from('channel_subscriptions').upsert({
+        'channel_name': channelName,
+        'is_subscribed': !isSubscribed, 
+      }, onConflict: 'channel_name');
 
       if (isSubscribed) {
         // UNSUBSCRIBE
         await supabase.from('user_subscriptions').delete().match({'user_id': userId, 'channel_id': channelId});
         await FirebaseMessaging.instance.unsubscribeFromTopic(safeTopicName);
+        print("🔴 Unsubscribed from FCM Topic: $safeTopicName");
       } else {
         // SUBSCRIBE
-        await supabase.from('user_subscriptions').insert({'user_id': userId, 'channel_id': channelId});
+        await supabase.from('user_subscriptions').upsert({'user_id': userId, 'channel_id': channelId});
         await FirebaseMessaging.instance.subscribeToTopic(safeTopicName);
+        print("🟢 Subscribed to FCM Topic: $safeTopicName");
       }
     } catch (e) {
       // If the database fails, revert the button back to its previous state

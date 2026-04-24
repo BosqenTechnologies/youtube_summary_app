@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_core/firebase_core.dart'; // 🔥 Firebase Core
-import 'package:firebase_messaging/firebase_messaging.dart'; // 🔥 Firebase Messaging
-import 'firebase_options.dart'; // 🔥 Auto-generated Firebase settings
+import 'package:firebase_core/firebase_core.dart'; 
+import 'package:firebase_messaging/firebase_messaging.dart'; 
+import 'firebase_options.dart'; 
 import 'app.dart';
 
-// 🔥 Background message handler (Must be outside of any class)
-// Only runs on native platforms (Android/iOS) — not supported on web
+// Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -18,9 +17,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Firebase — wrapped in try-catch + timeout
-  // On web release builds, a hanging Future is silently swallowed (no console error)
-  // causing the app to never reach runApp() → blank screen.
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -29,13 +25,10 @@ void main() async {
     print('⚠️ Firebase init failed or timed out: $e');
   }
 
-  // 2. Firebase Messaging setup — skipped on web (not supported)
   if (!kIsWeb) {
     try {
-      // Background message handler is not supported on web
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-      // 3. Request Permission for Notifications
       FirebaseMessaging messaging = FirebaseMessaging.instance;
       NotificationSettings settings = await messaging.requestPermission(
         alert: true,
@@ -44,7 +37,22 @@ void main() async {
       );
       print('User granted permission: ${settings.authorizationStatus}');
 
-      // 4. Get the Device Token (requires VAPID key on web, skip here)
+      // 🔥 FIX: Listen for messages when the app is OPEN in the foreground
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print("🔔🔔🔔 PUSH NOTIFICATION RECEIVED IN FOREGROUND! 🔔🔔🔔");
+        if (message.notification != null) {
+          print("Title: ${message.notification?.title}");
+          print("Body: ${message.notification?.body}");
+        }
+      });
+
+      // Tell Firebase to try to show the notification banner even if the app is open (mostly applies to iOS)
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
       String? token = await messaging.getToken();
       print('🔥 FCM Device Token: $token');
     } catch (e) {
@@ -52,7 +60,6 @@ void main() async {
     }
   }
 
-  // 5. Initialize Supabase — wrapped in try-catch + timeout
   try {
     await Supabase.initialize(
       url: 'https://vfzfrjjismvlrqbajktp.supabase.co',
@@ -63,7 +70,5 @@ void main() async {
     print('⚠️ Supabase init failed or timed out: $e');
   }
 
-  // runApp() is ALWAYS reached — no more blank screens from hanging init calls
   runApp(const ProviderScope(child: App()));
 }
-

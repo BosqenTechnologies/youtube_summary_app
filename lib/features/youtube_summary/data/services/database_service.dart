@@ -4,6 +4,7 @@ class DatabaseService {
   final supabase = Supabase.instance.client;
 
   // ── 1. Video Summary Methods ──
+
   Future<void> saveVideoData(Map<String, dynamic> videoData) async {
     try {
       await supabase.from('youtube_summaries').insert({
@@ -41,19 +42,28 @@ class DatabaseService {
     }
   }
 
-  // ── 2. NEW: Subscription & Notification Methods ──
-  
-  /// Updates or inserts a channel's subscription/notification status
+  // ── 2. Subscription & Notification Methods ──
+
+  /// Upserts a channel subscription row and ensures the channel exists in the main table.
   Future<void> updateSubscription({
-    required String channelName, 
-    required bool isSubscribed, 
-    required bool notificationsEnabled
+    required String channelName,
+    required bool isSubscribed,
+    required bool notificationsEnabled,
+    String? channelUrl, 
   }) async {
     try {
+      // 🔥 CRITICAL FIX: Ensure the channel exists in the main 'channels' table first!
+      await supabase.from('channels').upsert({
+        'channel_name': channelName,
+        if (channelUrl != null && channelUrl.isNotEmpty) 'channel_url': channelUrl,
+      }, onConflict: 'channel_name');
+
+      // Then update the Python API table preferences
       await supabase.from('channel_subscriptions').upsert({
         'channel_name': channelName,
         'is_subscribed': isSubscribed,
         'notifications_enabled': notificationsEnabled,
+        if (channelUrl != null && channelUrl.isNotEmpty) 'channel_url': channelUrl,
       });
       print('✅ Subscription updated for $channelName');
     } catch (e) {
@@ -62,14 +72,15 @@ class DatabaseService {
     }
   }
 
-  /// Fetches the current status for a specific channel
-  Future<Map<String, dynamic>?> getSubscriptionStatus(String channelName) async {
+  /// Fetches the current subscription status for ONE specific channel.
+  Future<Map<String, dynamic>?> getSubscriptionStatus(
+      String channelName) async {
     try {
       final response = await supabase
           .from('channel_subscriptions')
           .select()
           .eq('channel_name', channelName)
-          .maybeSingle(); // Returns null if not found
+          .maybeSingle();
       return response;
     } catch (e) {
       print('❌ Error fetching subscription status: $e');
@@ -77,13 +88,40 @@ class DatabaseService {
     }
   }
 
-  // 🔥 NEW: Mark a video as viewed
+  // 🔥 NEW: Fetch ALL channel subscriptions (for the Channels screen)
+  Future<List<Map<String, dynamic>>> getAllSubscriptions() async {
+    try {
+      final response = await supabase
+          .from('channel_subscriptions')
+          .select()
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('❌ Error fetching all subscriptions: $e');
+      return [];
+    }
+  }
+
+  // 🔥 NEW: Remove a channel subscription entirely
+  Future<void> deleteSubscription(String channelName) async {
+    try {
+      await supabase
+          .from('channel_subscriptions')
+          .delete()
+          .eq('channel_name', channelName);
+      print('🗑️ Deleted subscription for $channelName');
+    } catch (e) {
+      print('❌ Error deleting subscription: $e');
+      rethrow;
+    }
+  }
+
+  // Mark a video as viewed
   Future<void> markAsViewed(String videoId) async {
     try {
       await supabase
           .from('youtube_summaries')
-          .update({'is_viewed': true})
-          .eq('video_id', videoId);
+          .update({'is_viewed': true}).eq('video_id', videoId);
     } catch (e) {
       print('❌ Error marking as viewed: $e');
     }

@@ -45,7 +45,8 @@ class YouTubeExtractionService {
   Future<Map<String, dynamic>> fetchChannelProfile(String channelName) async {
     try {
       final encodedName = Uri.encodeComponent(channelName.trim());
-      final apiUrl = Uri.parse('http://127.0.0.1:8000/channel-profile?channel_name=$encodedName');
+    // To this:
+      final apiUrl = Uri.parse('http://10.0.2.2:8000/channel-profile?channel_name=$encodedName');
       final response = await http.get(apiUrl);
 
       if (response.statusCode != 200) {
