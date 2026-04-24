@@ -14,6 +14,9 @@ class VideoSummary {
   final String fullTranscript;
   final String videoUrl;
   final String videoId;
+  final String? channelUrl;
+  final String? channelProfileSummary;
+  final List<String> previousSummaries;
 
   VideoSummary({
     required this.title,
@@ -23,6 +26,9 @@ class VideoSummary {
     required this.fullTranscript,
     required this.videoUrl,
     required this.videoId,
+    this.channelUrl,
+    this.channelProfileSummary,
+    this.previousSummaries = const [],
   });
 }
 
@@ -41,14 +47,12 @@ class SummaryState {
     this.summary,
   });
 
-  // ✅ FIXED: Use boolean flags to explicitly clear nullable fields.
-  // The old pattern (error ?? this.error) never cleared error when null was passed.
   SummaryState copyWith({
     bool? isLoading,
     String? error,
     VideoSummary? summary,
-    bool clearError = false,      // ← pass clearError: true to set error → null
-    bool clearSummary = false,    // ← pass clearSummary: true to set summary → null
+    bool clearError = false,      
+    bool clearSummary = false,    
   }) {
     return SummaryState(
       isLoading: isLoading ?? this.isLoading,
@@ -69,7 +73,6 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
   final _databaseService = DatabaseService();
 
   Future<void> summarize(String url) async {
-    // ✅ FIXED: clearError: true actually sets error to null now
     state = state.copyWith(
       isLoading: true,
       clearError: true,
@@ -77,13 +80,10 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
     );
 
     try {
-      // Step 1: Extract from YouTube (uses fallback if blocked)
       final videoData = await _extractionService.fetchVideoData(url);
 
-      // Step 2: Save to Supabase
       await _databaseService.saveVideoData(videoData);
 
-      // Step 3: Update UI with result
       final transcript = videoData['transcript'] as String;
       state = state.copyWith(
         isLoading: false,
@@ -98,6 +98,9 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
           fullTranscript: transcript,
           videoUrl: videoData['video_url'] ?? url,
           videoId: videoData['video_id'],
+          channelUrl: videoData['channel_url'],
+          channelProfileSummary: videoData['channel_profile_summary'],
+          previousSummaries: List<String>.from(videoData['previous_summaries'] ?? []),
         ),
       );
     } catch (e) {

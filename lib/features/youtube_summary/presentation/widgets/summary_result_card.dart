@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/full_summary_screen.dart';
-// AppColors no longer used here — rely on Theme
+import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/channel_profile_screen.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../state/subscription_provider.dart';
 
 class SummaryResultCard extends ConsumerStatefulWidget {
@@ -13,6 +14,9 @@ class SummaryResultCard extends ConsumerStatefulWidget {
   final String summary;
   final String fullTranscript;
   final String videoUrl;
+  final String? channelUrl;
+  final String? channelProfileSummary;
+  final List<String> previousSummaries;
   final bool isViewed;
   final VoidCallback? onViewed;
 
@@ -25,6 +29,9 @@ class SummaryResultCard extends ConsumerStatefulWidget {
     required this.summary,
     required this.fullTranscript,
     required this.videoUrl,
+    this.channelUrl,
+    this.channelProfileSummary,
+    this.previousSummaries = const [],
     this.isViewed = true,
     this.onViewed,
   });
@@ -39,7 +46,6 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
     if (!widget.isViewed && widget.onViewed != null) {
       widget.onViewed!();
     }
-    // Navigates to the brand new Full Summary View
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -50,6 +56,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
           content: widget.summary,
           videoUrl: widget.videoUrl,
           isTranscript: false,
+          channelProfileSummary: widget.channelProfileSummary,
+          previousSummaries: widget.previousSummaries,
         ),
       ),
     );
@@ -74,24 +82,33 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
     );
   }
 
+  void _openChannelProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChannelProfileScreen(
+          channelName: widget.channelName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSubscribed = ref.watch(subscriptionProvider).contains(widget.channelName);
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.cardColor,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          if (!widget.isViewed) // Highlight new items
-            BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
+          if (!widget.isViewed) 
+            BoxShadow(color: AppColors.primaryRed.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Full Width Image
           Stack(
             children: [
               ClipRRect(
@@ -111,7 +128,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(color: AppColors.primaryRed, borderRadius: BorderRadius.circular(6)),
                     child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -123,28 +140,35 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 2. Title
                 Text(
                   widget.title,
-                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold) ?? const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
 
-                // 3. Channel Name & Subscribe (Embedded cleanly)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.channelName.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.5, fontWeight: FontWeight.w600) ?? const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                    InkWell(
+                      onTap: () => _openChannelProfile(context),
+                      child: Text(
+                        widget.channelName.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 12, 
+                          fontWeight: FontWeight.w700, 
+                          color: AppColors.primaryRed, 
+                          letterSpacing: 0.5,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
                     InkWell(
                       onTap: () => ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName),
                       child: Icon(
                         isSubscribed ? Icons.check_circle : Icons.add_circle_outline,
-                        color: isSubscribed ? Colors.green : theme.textTheme.labelSmall?.color,
+                        color: isSubscribed ? Colors.green : AppColors.textGrey,
                         size: 20,
                       ),
                     ),
@@ -152,15 +176,14 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                 ),
                 const SizedBox(height: 16),
 
-                // 4. Action Buttons
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => _openFullSummary(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
+                          backgroundColor: AppColors.primaryRed,
+                          foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -180,8 +203,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       child: ElevatedButton(
                         onPressed: () => _openTranscript(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.cardColor,
-                          foregroundColor: theme.colorScheme.onSurface,
+                          backgroundColor: AppColors.buttonGrey,
+                          foregroundColor: AppColors.textDark,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
