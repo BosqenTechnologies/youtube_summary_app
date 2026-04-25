@@ -189,6 +189,7 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                     channelUrl: state.summary!.channelUrl,
                     channelProfileSummary: state.summary!.channelProfileSummary,
                     previousSummaries: state.summary!.previousSummaries,
+                    relevanceReport: state.summary!.relevanceReport,
                   ),
                 )
               else if (!state.isLoading && state.error == null) ...[

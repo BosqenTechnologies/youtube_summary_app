@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:youtube_summary_app/features/youtube_summary/presentation/state/summary_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class FullSummaryScreen extends StatelessWidget {
@@ -13,6 +14,7 @@ class FullSummaryScreen extends StatelessWidget {
   final bool isTranscript;
   final String? channelProfileSummary;
   final List<String> previousSummaries;
+  final RelevanceReport? relevanceReport;
 
   const FullSummaryScreen({
     super.key,
@@ -24,6 +26,7 @@ class FullSummaryScreen extends StatelessWidget {
     required this.isTranscript,
     this.channelProfileSummary,
     this.previousSummaries = const [],
+    this.relevanceReport,
   });
 
   Future<void> _launchYouTubeVideo(BuildContext context) async {
@@ -149,6 +152,96 @@ class FullSummaryScreen extends StatelessWidget {
                               ),
                             ),
                           )).toList(),
+                        ],
+
+                        if (!isTranscript) ...[
+                          const SizedBox(height: 40),
+                          const Text(
+                            'RELATED INTELLIGENCE',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.2),
+                          ),
+                          const SizedBox(height: 12),
+                          if (relevanceReport != null && relevanceReport!.isRelated)
+                            ...relevanceReport!.similarSummaries.map((similar) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: InkWell(
+                                onTap: () => launchUrl(Uri.parse('https://www.youtube.com/watch?v=${similar.videoId}'), mode: LaunchMode.externalApplication),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppColors.buttonGrey),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2))
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 16),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '${(similar.similarity * 100).toStringAsFixed(0)}% Match',
+                                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        similar.title,
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        similar.channelName.toUpperCase(),
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textGrey),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        similar.summary,
+                                        style: TextStyle(fontSize: 13, color: AppColors.textDark.withOpacity(0.7), height: 1.4),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        'Tap to watch on YouTube',
+                                        style: TextStyle(fontSize: 11, color: AppColors.primaryRed, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )).toList()
+                          else
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.buttonGrey.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.buttonGrey),
+                              ),
+                              child: Column(
+                                children: const [
+                                  Icon(Icons.hub_outlined, color: AppColors.textGrey, size: 32),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'No related content discovered yet.',
+                                    style: TextStyle(color: AppColors.textGrey, fontSize: 14, fontWeight: FontWeight.w500),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Try summarizing more videos to build your knowledge map.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: AppColors.textGrey, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ],
                     ),

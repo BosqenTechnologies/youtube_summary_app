@@ -33,6 +33,7 @@ class YouTubeExtractionService {
         'channel_url': data['channel_url'],
         'channel_profile_summary': data['channel_profile_summary'],
         'previous_summaries': data['previous_summaries'],
+        'relevance_report': data['relevance_report'],
         'transcript': data['transcript'],
         'summary': data['summary'],
       };

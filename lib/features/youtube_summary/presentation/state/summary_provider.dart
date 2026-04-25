@@ -6,6 +6,55 @@ import 'package:youtube_summary_app/features/youtube_summary/data/services/youtu
 // DATA MODEL
 // ──────────────────────────────────────────────
 
+class SimilarSummary {
+  final String videoId;
+  final String title;
+  final String summary;
+  final String transcript;
+  final String channelName;
+  final double similarity;
+
+  SimilarSummary({
+    required this.videoId,
+    required this.title,
+    required this.summary,
+    required this.transcript,
+    required this.channelName,
+    required this.similarity,
+  });
+
+  factory SimilarSummary.fromJson(Map<String, dynamic> json) {
+    return SimilarSummary(
+      videoId: json['video_id'] ?? '',
+      title: json['title'] ?? '',
+      summary: json['summary'] ?? '',
+      transcript: json['transcript'] ?? '',
+      channelName: json['channel_name'] ?? '',
+      similarity: (json['similarity'] ?? 0.0).toDouble(),
+    );
+  }
+}
+
+class RelevanceReport {
+  final bool isRelated;
+  final List<SimilarSummary> similarSummaries;
+
+  RelevanceReport({
+    required this.isRelated,
+    required this.similarSummaries,
+  });
+
+  factory RelevanceReport.fromJson(Map<String, dynamic> json) {
+    return RelevanceReport(
+      isRelated: json['is_related'] ?? false,
+      similarSummaries: (json['similar_summaries'] as List?)
+              ?.map((e) => SimilarSummary.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+}
+
 class VideoSummary {
   final String title;
   final String channelName;
@@ -17,6 +66,7 @@ class VideoSummary {
   final String? channelUrl;
   final String? channelProfileSummary;
   final List<String> previousSummaries;
+  final RelevanceReport? relevanceReport;
 
   VideoSummary({
     required this.title,
@@ -29,6 +79,7 @@ class VideoSummary {
     this.channelUrl,
     this.channelProfileSummary,
     this.previousSummaries = const [],
+    this.relevanceReport,
   });
 }
 
@@ -101,6 +152,9 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
           channelUrl: videoData['channel_url'],
           channelProfileSummary: videoData['channel_profile_summary'],
           previousSummaries: List<String>.from(videoData['previous_summaries'] ?? []),
+          relevanceReport: videoData['relevance_report'] != null
+              ? RelevanceReport.fromJson(videoData['relevance_report'])
+              : null,
         ),
       );
     } catch (e) {
