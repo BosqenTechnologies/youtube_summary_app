@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:youtube_summary_app/core/constants/app_colors.dart';
+
 import 'package:youtube_summary_app/features/youtube_summary/data/services/youtube_extraction_service.dart';
 
 class ChannelProfileScreen extends StatefulWidget {
@@ -43,22 +43,30 @@ class _ChannelProfileScreenState extends State<ChannelProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scaffoldBg = theme.scaffoldBackgroundColor;
+    final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+    final secondaryColor = onSurface.withOpacity(0.5);
+    final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: scaffoldBg,
         elevation: 0,
         title: Text(
           widget.channelName,
-          style: const TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
+          style: TextStyle(color: onSurface, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back, color: onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryRed))
+          ? Center(child: CircularProgressIndicator(color: primary))
           : _error != null
               ? Center(child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -69,43 +77,43 @@ class _ChannelProfileScreenState extends State<ChannelProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'CREATOR PERSONA',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.2),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.2),
                       ),
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)],
                         ),
                         child: Text(
                           _profileData?['profile_summary'] ?? 'No profile generated yet.',
-                          style: const TextStyle(fontSize: 16, height: 1.6, color: AppColors.textDark),
+                          style: TextStyle(fontSize: 16, height: 1.6, color: onSurface),
                         ),
                       ),
 
                       const SizedBox(height: 32),
 
-                      const Text(
+                      Text(
                         'LATEST CONTENT FOCUS',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.2),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.2),
                       ),
                       const SizedBox(height: 16),
-                      ...(_profileData?['last_3_summaries'] as List? ?? []).map((v) => _buildVideoCard(v)).toList(),
+                      ...(_profileData?['last_3_summaries'] as List? ?? []).map((v) => _buildVideoCard(v, cardColor, fillColor, onSurface)).toList(),
 
                       const SizedBox(height: 32),
                       
-                      const Text(
+                      Text(
                         'QUICK LINKS',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.2),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.2),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         "Channel URL: ${_profileData?['channel_url'] ?? 'N/A'}",
-                        style: TextStyle(fontSize: 14, color: AppColors.textDark.withOpacity(0.8), height: 1.5),
+                        style: TextStyle(fontSize: 14, color: onSurface.withOpacity(0.8), height: 1.5),
                       ),
                     ],
                   ),
@@ -113,28 +121,28 @@ class _ChannelProfileScreenState extends State<ChannelProfileScreen> {
     );
   }
 
-  Widget _buildVideoCard(dynamic video) {
+  Widget _buildVideoCard(dynamic video, Color cardColor, Color borderColor, Color onSurface) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.buttonGrey),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             video['title'] ?? 'Unknown Title',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textDark),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: onSurface),
           ),
           const SizedBox(height: 8),
           Text(
             video['summary'] ?? '',
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: AppColors.textDark.withOpacity(0.7), height: 1.4),
+            style: TextStyle(fontSize: 13, color: onSurface.withOpacity(0.7), height: 1.4),
           ),
         ],
       ),

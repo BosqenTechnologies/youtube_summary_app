@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:youtube_summary_app/core/theme/theme_provider.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../../data/services/database_service.dart';
+import '../state/summary_provider.dart';
 import '../widgets/summary_result_card.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
@@ -136,6 +138,48 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final thumbnailUrl = item['thumbnail_url'] ?? (videoId != null ? 'https://img.youtube.com/vi/$videoId/0.jpg' : '');
     final isViewed = item['is_viewed'] ?? true;
 
+    // Robust extraction for JSON/Complex fields
+    dynamic rawRelevance = item['relevance_report'];
+    RelevanceReport? relevanceReport;
+    if (rawRelevance != null) {
+      try {
+        if (rawRelevance is String) {
+          relevanceReport = RelevanceReport.fromJson(jsonDecode(rawRelevance));
+        } else if (rawRelevance is Map) {
+          relevanceReport = RelevanceReport.fromJson(Map<String, dynamic>.from(rawRelevance));
+        }
+      } catch (e) {
+        print('Error parsing relevance_report: $e');
+      }
+    }
+
+    dynamic rawPrevious = item['previous_summaries'];
+    List<String> previousSummaries = [];
+    if (rawPrevious != null) {
+      try {
+        if (rawPrevious is String) {
+          previousSummaries = List<String>.from(jsonDecode(rawPrevious));
+        } else if (rawPrevious is List) {
+          previousSummaries = List<String>.from(rawPrevious);
+        }
+      } catch (e) {
+        print('Error parsing previous_summaries: $e');
+      }
+    }
+
+    // Handle potential corrupted summary (Map instead of String)
+    String summaryText = '';
+    dynamic rawSummary = item['summary'];
+    if (rawSummary != null) {
+      if (rawSummary is String) {
+        summaryText = rawSummary;
+      } else if (rawSummary is Map) {
+        summaryText = rawSummary['summary'] ?? rawSummary['text'] ?? rawSummary.toString();
+      } else {
+        summaryText = rawSummary.toString();
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: SummaryResultCard(
@@ -143,9 +187,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         thumbnailUrl: thumbnailUrl,
         title: item['title'] ?? 'Unknown Title',
         channelName: item['channel_name'] ?? 'Unknown Channel',
-        summary: item['summary'] ?? '',
+        summary: summaryText,
         fullTranscript: item['transcript'] ?? '',
         videoUrl: item['video_url'] ?? '',
+        channelUrl: item['channel_url'],
+        channelProfileSummary: item['channel_profile_summary'],
+        previousSummaries: previousSummaries,
+        relevanceReport: relevanceReport,
         isViewed: isViewed,
         onViewed: () async {
           if (videoId != null) {

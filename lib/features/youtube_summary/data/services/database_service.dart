@@ -14,6 +14,10 @@ class DatabaseService {
         'channel_name': videoData['channel_name'],
         'transcript': videoData['transcript'],
         'summary': videoData['summary'],
+        'channel_url': videoData['channel_url'],
+        'channel_profile_summary': videoData['channel_profile_summary'],
+        'previous_summaries': videoData['previous_summaries'],
+        'relevance_report': videoData['relevance_report'],
       });
       print('✅ Saved to Supabase successfully!');
     } on PostgrestException catch (e) {
@@ -39,6 +43,21 @@ class DatabaseService {
     } catch (e) {
       print('❌ Unexpected error fetching from Supabase: $e');
       return [];
+    }
+  }
+
+  /// Fetch a single saved summary by its video_id (for Related Intelligence navigation).
+  Future<Map<String, dynamic>?> getSummaryByVideoId(String videoId) async {
+    try {
+      final response = await supabase
+          .from('youtube_summaries')
+          .select()
+          .eq('video_id', videoId)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      print('❌ Error fetching summary by videoId: $e');
+      return null;
     }
   }
 

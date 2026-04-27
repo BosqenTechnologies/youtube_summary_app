@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'; 
-import 'package:youtube_summary_app/core/constants/app_colors.dart';
+
 import 'package:youtube_summary_app/core/constants/app_strings.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../state/summary_provider.dart';
@@ -33,27 +33,28 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
   }
 
   Future<void> _showLogoutDialog(BuildContext context) async {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
+          title: Text(
             'Logout',
-            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
+            style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
           ),
-          content: const Text(
+          content: Text(
             'Are you sure you want to logout?',
-            style: TextStyle(color: AppColors.textGrey, fontSize: 16),
+            style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 16),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(), 
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textGrey, fontWeight: FontWeight.bold)),
+              child: Text('Cancel', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.bold)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
+                backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -73,17 +74,18 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(summaryProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'TubeSum',
           style: TextStyle(
-            color: AppColors.primaryRed,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w900,
             fontSize: 22,
             letterSpacing: -0.5,
@@ -91,11 +93,11 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.primaryRed),
+            icon: Icon(Icons.logout, color: theme.colorScheme.primary),
             onPressed: () => _showLogoutDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.notifications, color: AppColors.primaryRed),
+            icon: Icon(Icons.notifications, color: theme.colorScheme.primary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -107,29 +109,29 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
-        color: AppColors.primaryRed,
+        color: theme.colorScheme.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 AppStrings.distillNoise,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 AppStrings.distillSubtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textGrey,
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                   height: 1.4,
                 ),
               ),
@@ -149,9 +151,15 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                   margin: const EdgeInsets.only(top: 24),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.red.shade900.withOpacity(0.3)
+                        : Colors.red.shade50,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.red.shade700
+                          : Colors.red.shade200,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -168,10 +176,10 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
                 ),
 
               if (state.isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
                   child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primaryRed),
+                    child: CircularProgressIndicator(color: theme.colorScheme.primary),
                   ),
                 ),
 
@@ -195,12 +203,14 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
               else if (!state.isLoading && state.error == null) ...[
                 const SizedBox(height: 24),
                 _buildFeatureCard(
+                  context: context,
                   icon: Icons.speed,
                   title: 'Instant Insights',
                   description: 'Get the core message of any video in seconds, not minutes.',
                 ),
                 const SizedBox(height: 16),
                 _buildFeatureCard(
+                  context: context,
                   icon: Icons.format_list_bulleted,
                   title: 'Structured Chapters',
                   description: 'Summaries are broken down into logical, easy-to-read sections.',
@@ -213,32 +223,33 @@ class _SummaryHomeScreenState extends ConsumerState<SummaryHomeScreen> {
     );
   }
 
-  Widget _buildFeatureCard({required IconData icon, required String title, required String description}) {
+  Widget _buildFeatureCard({required BuildContext context, required IconData icon, required String title, required String description}) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: theme.cardTheme.color ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primaryRed, size: 28),
+          Icon(icon, color: theme.colorScheme.primary, size: 28),
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textGrey,
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
               height: 1.4,
             ),
           ),

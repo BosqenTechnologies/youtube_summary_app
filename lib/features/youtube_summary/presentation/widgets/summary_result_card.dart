@@ -98,20 +98,33 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
   }
 
   void _showTranscriptBottomSheet(BuildContext context, SimilarSummary similar) {
+    final theme = Theme.of(context);
+    final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final secondaryColor = theme.colorScheme.onSurface.withOpacity(0.5);
+    final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: secondaryColor.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
@@ -119,14 +132,14 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: CachedNetworkImage(
-                      imageUrl: 'https://img.youtube.com/vi/${similar.videoId}/0.jpg',
+                      imageUrl: 'https://i.ytimg.com/vi/${similar.videoId}/hqdefault.jpg',
                       width: 60,
                       height: 40,
                       fit: BoxFit.cover,
                       errorWidget: (context, url, error) => Container(
                         width: 60,
                         height: 40,
-                        color: Colors.grey[200],
+                        color: theme.colorScheme.surfaceContainerHighest,
                         child: const Icon(Icons.error, size: 20),
                       ),
                     ),
@@ -135,40 +148,40 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   Expanded(
                     child: Text(
                       'Transcript: ${similar.title}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                  IconButton(icon: Icon(Icons.close, color: onSurface), onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: secondaryColor.withOpacity(0.2)),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'AI SUMMARY',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.0),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.0),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       similar.summary,
-                      style: const TextStyle(fontSize: 15, color: AppColors.textDark, height: 1.6, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 15, color: onSurface, height: 1.6, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 30),
-                    const Text(
+                    Text(
                       'FULL TRANSCRIPT',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 1.0),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.0),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       similar.transcript.isNotEmpty ? similar.transcript : "No transcript available for this video.",
-                      style: TextStyle(fontSize: 13, color: AppColors.textDark.withOpacity(0.8), height: 1.6),
+                      style: TextStyle(fontSize: 13, color: onSurface.withOpacity(0.8), height: 1.6),
                     ),
                   ],
                 ),
@@ -183,16 +196,22 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
   @override
   Widget build(BuildContext context) {
     final isSubscribed = ref.watch(subscriptionProvider).contains(widget.channelName);
+    final theme = Theme.of(context);
+    final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
+    final onSurface = theme.colorScheme.onSurface;
+    final primary = theme.colorScheme.primary;
+    final secondaryColor = onSurface.withOpacity(0.5);
+    final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
 
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.cardBackground,
+            color: cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               if (!widget.isViewed) 
-                BoxShadow(color: AppColors.primaryRed.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
+                BoxShadow(color: primary.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
             ],
           ),
           child: Column(
@@ -207,8 +226,11 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       width: double.infinity,
                       height: 180,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[200]),
-                      errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.error)),
+                      placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainerHighest),
+                      errorWidget: (context, url, error) => Container(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        child: Icon(Icons.error, color: secondaryColor),
+                      ),
                     ),
                   ),
                   if (!widget.isViewed)
@@ -217,7 +239,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       left: 12,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: AppColors.primaryRed, borderRadius: BorderRadius.circular(6)),
+                        decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(6)),
                         child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -231,7 +253,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                   children: [
                     Text(
                       widget.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -244,10 +266,10 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           onTap: () => _openChannelProfile(context),
                           child: Text(
                             widget.channelName.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12, 
                               fontWeight: FontWeight.w700, 
-                              color: AppColors.primaryRed, 
+                              color: primary, 
                               letterSpacing: 0.5,
                               decoration: TextDecoration.underline,
                             ),
@@ -257,7 +279,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           onTap: () => ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName),
                           child: Icon(
                             isSubscribed ? Icons.check_circle : Icons.add_circle_outline,
-                            color: isSubscribed ? Colors.green : AppColors.textGrey,
+                            color: isSubscribed ? Colors.green : secondaryColor,
                             size: 20,
                           ),
                         ),
@@ -271,7 +293,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           child: ElevatedButton(
                             onPressed: () => _openFullSummary(context),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryRed,
+                              backgroundColor: primary,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -292,8 +314,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           child: ElevatedButton(
                             onPressed: () => _openTranscript(context),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.buttonGrey,
-                              foregroundColor: AppColors.textDark,
+                              backgroundColor: fillColor,
+                              foregroundColor: onSurface,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -323,20 +345,20 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.buttonGrey.withOpacity(0.5)),
+              border: Border.all(color: fillColor.withOpacity(0.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.hub_outlined, size: 14, color: AppColors.textGrey),
-                    SizedBox(width: 6),
+                  children: [
+                    Icon(Icons.hub_outlined, size: 14, color: secondaryColor),
+                    const SizedBox(width: 6),
                     Text(
                       'RELATED INTELLIGENCE',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textGrey, letterSpacing: 0.8),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 0.8),
                     ),
                   ],
                 ),
@@ -348,7 +370,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.buttonGrey.withOpacity(0.3),
+                        color: fillColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -356,14 +378,14 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: CachedNetworkImage(
-                              imageUrl: 'https://img.youtube.com/vi/${similar.videoId}/0.jpg',
+                              imageUrl: 'https://i.ytimg.com/vi/${similar.videoId}/hqdefault.jpg',
                               width: 48,
                               height: 32,
                               fit: BoxFit.cover,
                               errorWidget: (context, url, error) => Container(
                                 width: 48,
                                 height: 32,
-                                color: Colors.grey[200],
+                                color: theme.colorScheme.surfaceContainerHighest,
                                 child: const Icon(Icons.image_not_supported, size: 14),
                               ),
                             ),
@@ -375,18 +397,18 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                               children: [
                                 Text(
                                   similar.title,
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textDark, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 11, color: onSurface, fontWeight: FontWeight.bold),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   "Tap to view related transcript",
-                                  style: TextStyle(fontSize: 9, color: AppColors.textGrey),
+                                  style: TextStyle(fontSize: 9, color: secondaryColor),
                                 ),
                               ],
                             ),
                           ),
-                          const Icon(Icons.chevron_right, size: 16, color: AppColors.textGrey),
+                          Icon(Icons.chevron_right, size: 16, color: secondaryColor),
                         ],
                       ),
                     ),
