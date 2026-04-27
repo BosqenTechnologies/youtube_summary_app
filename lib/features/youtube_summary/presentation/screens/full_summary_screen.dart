@@ -176,40 +176,65 @@ class FullSummaryScreen extends StatelessWidget {
                                       BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5, offset: const Offset(0, 2))
                                     ],
                                   ),
-                                  child: Column(
+                                  child: Row(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.auto_awesome, color: Colors.amber, size: 16),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            '${(similar.similarity * 100).toStringAsFixed(0)}% Match',
-                                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: CachedNetworkImage(
+                                          imageUrl: 'https://img.youtube.com/vi/${similar.videoId}/0.jpg',
+                                          width: 100,
+                                          height: 66,
+                                          fit: BoxFit.cover,
+                                          errorWidget: (context, url, error) => Container(
+                                            width: 100,
+                                            height: 66,
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.error),
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        similar.title,
-                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        similar.channelName.toUpperCase(),
-                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textGrey),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        similar.summary,
-                                        style: TextStyle(fontSize: 13, color: AppColors.textDark.withOpacity(0.7), height: 1.4),
-                                        maxLines: 3,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const Text(
-                                        'Tap to watch on YouTube',
-                                        style: TextStyle(fontSize: 11, color: AppColors.primaryRed, fontWeight: FontWeight.w600),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                const Icon(Icons.auto_awesome, color: Colors.amber, size: 14),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  '${(similar.similarity * 100).toStringAsFixed(0)}% Match',
+                                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.amber),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              similar.title,
+                                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              similar.channelName.toUpperCase(),
+                                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textGrey),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              similar.summary,
+                                              style: TextStyle(fontSize: 13, color: AppColors.textDark.withOpacity(0.7), height: 1.4),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              'Tap to watch on YouTube',
+                                              style: TextStyle(fontSize: 11, color: AppColors.primaryRed, fontWeight: FontWeight.w600),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),

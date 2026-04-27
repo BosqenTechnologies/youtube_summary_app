@@ -116,7 +116,21 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
               padding: const EdgeInsets.all(20.0),
               child: Row(
                 children: [
-                  const Icon(Icons.notes, color: AppColors.primaryRed),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: CachedNetworkImage(
+                      imageUrl: 'https://img.youtube.com/vi/${similar.videoId}/0.jpg',
+                      width: 60,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorWidget: (context, url, error) => Container(
+                        width: 60,
+                        height: 40,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.error, size: 20),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -339,8 +353,22 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_awesome, size: 14, color: Colors.amber),
-                          const SizedBox(width: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: CachedNetworkImage(
+                              imageUrl: 'https://img.youtube.com/vi/${similar.videoId}/0.jpg',
+                              width: 48,
+                              height: 32,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => Container(
+                                width: 48,
+                                height: 32,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image_not_supported, size: 14),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
