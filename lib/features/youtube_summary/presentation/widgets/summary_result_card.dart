@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/full_summary_screen.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/channel_profile_screen.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../state/subscription_provider.dart';
 import '../state/summary_provider.dart';
 
