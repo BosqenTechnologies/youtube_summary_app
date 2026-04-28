@@ -1,6 +1,6 @@
 {
-    "name": "youtube_summary_app",
-    "short_name": "youtube_summary_app",
+    "name": "TubeSum",
+    "short_name": "TubeSum",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

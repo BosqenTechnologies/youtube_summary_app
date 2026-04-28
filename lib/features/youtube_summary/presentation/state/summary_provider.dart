@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youtube_summary_app/features/youtube_summary/data/services/database_service.dart';
 import 'package:youtube_summary_app/features/youtube_summary/data/services/youtube_extraction_service.dart';
 
 // ──────────────────────────────────────────────
@@ -121,7 +120,6 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
   SummaryNotifier() : super(const SummaryState());
 
   final _extractionService = YouTubeExtractionService();
-  final _databaseService = DatabaseService();
 
   Future<void> summarize(String url) async {
     state = state.copyWith(
@@ -133,8 +131,7 @@ class SummaryNotifier extends StateNotifier<SummaryState> {
     try {
       final videoData = await _extractionService.fetchVideoData(url);
 
-      await _databaseService.saveVideoData(videoData);
-
+      // Note: the Python backend saves to DB in a background task — no client-side save needed.
       final transcript = videoData['transcript'] as String;
       state = state.copyWith(
         isLoading: false,

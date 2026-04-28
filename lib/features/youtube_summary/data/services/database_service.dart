@@ -39,7 +39,10 @@ class DatabaseService {
           .from('youtube_summaries')
           .select()
           .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(response);
+          
+      final list = List<Map<String, dynamic>>.from(response);
+      // Only show rows with a real summary — filters out any error/partial records
+      return list.where((row) => row['summary'] != null && row['summary'].toString().trim().isNotEmpty).toList();
     } catch (e) {
       print('❌ Unexpected error fetching from Supabase: $e');
       return [];

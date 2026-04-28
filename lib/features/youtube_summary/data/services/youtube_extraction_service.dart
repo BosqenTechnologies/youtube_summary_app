@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 class YouTubeExtractionService {
@@ -11,8 +12,7 @@ class YouTubeExtractionService {
 
     try {
       final encodedUrl = Uri.encodeComponent(url.trim());
-      // Update this IP if your backend is hosted elsewhere
-      final apiUrl = Uri.parse('http://127.0.0.1:8000/transcript?url=$encodedUrl');
+      final apiUrl = Uri.parse('$_baseUrl/transcript?url=$encodedUrl');
       final response = await http.get(apiUrl);
 
       if (response.statusCode != 200) {
@@ -46,8 +46,7 @@ class YouTubeExtractionService {
   Future<Map<String, dynamic>> fetchChannelProfile(String channelName) async {
     try {
       final encodedName = Uri.encodeComponent(channelName.trim());
-    // To this:
-      final apiUrl = Uri.parse('http://10.0.2.2:8000/channel-profile?channel_name=$encodedName');
+      final apiUrl = Uri.parse('$_baseUrl/channel-profile?channel_name=$encodedName');
       final response = await http.get(apiUrl);
 
       if (response.statusCode != 200) {
@@ -69,5 +68,16 @@ class YouTubeExtractionService {
     return url.contains('youtube.com') ||
         url.contains('youtu.be') ||
         RegExp(r'^[a-zA-Z0-9_-]{11}$').hasMatch(url);
+  }
+
+  String get _baseUrl {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:8000';
+    }
+    // Physical Android device: use your PC's LAN IP so the phone can reach the server.
+    // 10.0.2.2 only works inside the Android Emulator (it maps to the host's localhost).
+    // Run `ipconfig` on your PC to get the correct IP if this ever changes.
+    return 'http://192.168.1.37:8000';
+    // return 'https://yt-summary-python-api.onrender.com'; // Production URL
   }
 }

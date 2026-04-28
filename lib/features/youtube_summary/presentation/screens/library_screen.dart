@@ -38,6 +38,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for new summaries being generated and refresh the vault automatically.
+    ref.listen<SummaryState>(summaryProvider, (previous, next) {
+      if (previous?.isLoading == true && next.isLoading == false && next.summary != null) {
+        // Add a short delay to ensure Python background task finishes saving to DB
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) _fetchSummaries();
+        });
+      }
+    });
+
     final theme = Theme.of(context);
 
     return Scaffold(
