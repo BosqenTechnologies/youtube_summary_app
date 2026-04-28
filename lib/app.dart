@@ -80,20 +80,27 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    // Use the alias to clarify we want Supabase's AuthState for the stream
+    // Check current session first, then listen to the stream for changes.
+    // This prevents the vault from loading before auth is confirmed.
+    final currentSession = supabase.auth.currentSession;
+
     return StreamBuilder<supabase_pkg.AuthState>(
       stream: supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
-        final session = snapshot.hasData ? snapshot.data!.session : null;
+        // Use stream data if available, otherwise fall back to the currentSession
+        // captured before the stream starts emitting.
+        final session = snapshot.hasData
+            ? snapshot.data!.session
+            : currentSession;
 
         if (session != null) {
-          return const MainScreen(); 
+          return const MainScreen();
         }
 
         // Initialize dependencies for Clean Architecture when showing AuthScreen
         final remoteDataSource = AuthRemoteDataSourceImpl(supabaseClient: supabase);
         final repository = AuthRepositoryImpl(remoteDataSource: remoteDataSource);
-        
+
         // Inject the Cubit so AuthScreen and OtpScreen can use it
         return BlocProvider(
           create: (context) => AuthCubit(

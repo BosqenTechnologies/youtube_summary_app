@@ -18,6 +18,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   final _databaseService = DatabaseService();
   List<Map<String, dynamic>> _savedSummaries = [];
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -26,13 +27,25 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Future<void> _fetchSummaries() async {
-    setState(() => _isLoading = true);
-    final summaries = await _databaseService.getSavedSummaries();
-    if (mounted) {
-      setState(() {
-        _savedSummaries = summaries;
-        _isLoading = false;
-      });
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    try {
+      final summaries = await _databaseService.getSavedSummaries();
+      if (mounted) {
+        setState(() {
+          _savedSummaries = summaries;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
     }
   }
 
@@ -101,12 +114,27 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No summaries in vault yet.',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                      ),
+                      if (_hasError) ...[
+                        Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Could not load vault.',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: _fetchSummaries,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ] else ...[
+                        Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No summaries in vault yet.',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ],
                     ],
                   ),
                 )

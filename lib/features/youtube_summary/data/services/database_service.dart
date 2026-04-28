@@ -38,8 +38,12 @@ class DatabaseService {
       final response = await supabase
           .from('youtube_summaries')
           .select()
-          .order('created_at', ascending: false);
-          
+          .order('created_at', ascending: false)
+          .timeout(const Duration(seconds: 10), onTimeout: () {
+            print('⏱️ getSavedSummaries timed out');
+            return [];
+          });
+
       final list = List<Map<String, dynamic>>.from(response);
       // Only show rows with a real summary — filters out any error/partial records
       return list.where((row) => row['summary'] != null && row['summary'].toString().trim().isNotEmpty).toList();
