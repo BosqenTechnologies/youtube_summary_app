@@ -102,6 +102,7 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
     final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
     final onSurface = theme.colorScheme.onSurface;
     final secondaryColor = theme.colorScheme.onSurface.withOpacity(0.5);
+    // ignore: unused_local_variable
     final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
 
     showModalBottomSheet(

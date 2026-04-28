@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; 
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:youtube_summary_app/features/auth_screen/presentation/screens/auth_screen.dart';
-import 'core/theme/app_theme.dart';
-import 'features/youtube_summary/presentation/screens/main_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Needed for BlocProvider
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase_pkg; // Alias to prevent collisions here
 
+import 'features/auth_screen/presentation/screens/auth_screen.dart';
+import 'features/youtube_summary/presentation/screens/main_screen.dart';
+import 'core/theme/app_theme.dart';
 import 'core/constants/app_strings.dart';
-import 'core/theme/theme_provider.dart'; 
+import 'core/theme/theme_provider.dart';
+
+// --- Clean Architecture Imports for Auth ---
+import 'features/auth_screen/data/datasources/auth_remote_data_source.dart';
+import 'features/auth_screen/data/repositories/auth_repository_impl.dart';
+import 'features/auth_screen/domain/usecases/send_otp_usecase.dart';
+import 'features/auth_screen/domain/usecases/verify_otp_usecase.dart';
+import 'features/auth_screen/presentation/bloc/auth_cubit.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -18,11 +26,9 @@ class App extends ConsumerWidget {
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
-      
       themeMode: themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      
       home: const AuthGate(), 
     );
   }
@@ -36,7 +42,7 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  final supabase = Supabase.instance.client;
+  final supabase = supabase_pkg.Supabase.instance.client;
   bool _isVerifying = true; 
 
   @override
@@ -74,7 +80,8 @@ class _AuthGateState extends State<AuthGate> {
       );
     }
 
-    return StreamBuilder<AuthState>(
+    // Use the alias to clarify we want Supabase's AuthState for the stream
+    return StreamBuilder<supabase_pkg.AuthState>(
       stream: supabase.auth.onAuthStateChange,
       builder: (context, snapshot) {
         final session = snapshot.hasData ? snapshot.data!.session : null;
@@ -83,7 +90,18 @@ class _AuthGateState extends State<AuthGate> {
           return const MainScreen(); 
         }
 
-        return const AuthScreen();
+        // Initialize dependencies for Clean Architecture when showing AuthScreen
+        final remoteDataSource = AuthRemoteDataSourceImpl(supabaseClient: supabase);
+        final repository = AuthRepositoryImpl(remoteDataSource: remoteDataSource);
+        
+        // Inject the Cubit so AuthScreen and OtpScreen can use it
+        return BlocProvider(
+          create: (context) => AuthCubit(
+            sendOtpUseCase: SendOtpUseCase(repository),
+            verifyOtpUseCase: VerifyOtpUseCase(repository),
+          ),
+          child: const AuthScreen(),
+        );
       },
     );
   }
