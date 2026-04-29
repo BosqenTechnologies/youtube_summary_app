@@ -1,90 +1,134 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+// lib/features/youtube_summary/presentation/state/subscription_provider.dart
+//
+// Riverpod state for the current user's channel subscriptions.
+// Backed by the `channel_subscriptions` Supabase table (per-user via RLS).
+// Also manages Firebase topic subscription/unsubscription so notifications
+// follow the user's per-channel preference automatically.
 
-// Provides a Set of subscribed channel NAMES (e.g., {'Money Pechu', 'Another Channel'})
-final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, Set<String>>((ref) {
-  return SubscriptionNotifier();
-});
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/services/database_service.dart';
+import '../../../../core/notifications/notification_helper.dart';
+
+// ── Provider ─────────────────────────────────────────────────────────────────
+
+/// Exposes the SET of channel names the current user is subscribed to.
+/// Use `ref.watch(subscriptionProvider).contains(channelName)` in UI.
+final subscriptionProvider =
+    StateNotifierProvider<SubscriptionNotifier, Set<String>>(
+  (ref) => SubscriptionNotifier(DatabaseService()),
+);
+
+// ── Notifier ─────────────────────────────────────────────────────────────────
 
 class SubscriptionNotifier extends StateNotifier<Set<String>> {
-  SubscriptionNotifier() : super({}) {
-    _loadSubscriptions(); // Auto-load on app start
+  final DatabaseService _db;
+
+  SubscriptionNotifier(this._db) : super(const {}) {
+    _load();
   }
 
-  final supabase = Supabase.instance.client;
+  // ── Internal load & FCM restore ───────────────────────────────────────────
 
-  Future<void> _loadSubscriptions() async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) return;
+  Future<void> _load() async {
+    final subs = await _db.getAllSubscriptions();
+    final subscribed = <String>{};
 
-    try {
-      // 1. Get the IDs this user is subscribed to
-      final subsData = await supabase.from('user_subscriptions').select('channel_id').eq('user_id', userId);
-      if (subsData.isEmpty) return;
-      
-      final subIds = subsData.map((e) => e['channel_id']).toList();
-
-      // 2. Look up the names for those IDs so the UI can read them easily
-      final channelsData = await supabase.from('channels').select('channel_name').inFilter('id', subIds);
-      state = channelsData.map((e) => e['channel_name'].toString()).toSet();
-    } catch (e) {
-      print("Error loading subscriptions: $e");
+    for (final sub in subs) {
+      final name = sub['channel_name'] as String? ?? '';
+      final isSubscribed = sub['is_subscribed'] as bool? ?? false;
+      if (isSubscribed && name.isNotEmpty) {
+        subscribed.add(name);
+      }
     }
+
+    state = subscribed;
+
+    // Restore Firebase topic subscriptions for this device after login /
+    // app restart so the user never misses a notification.
+    await NotificationHelper.restoreTopicsForUser(subs);
   }
 
-  Future<void> toggleSubscription(String channelName) async {
-    final userId = supabase.auth.currentUser?.id;
-    if (userId == null) throw Exception("Please log in to subscribe");
+  // ── Public API ────────────────────────────────────────────────────────────
 
-    // 🔥 CRITICAL FIX: Make topic name 100% safe (lowercase, no spaces, no special chars)
-    final cleanName = channelName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
-    final safeTopicName = 'channel_$cleanName';
-    
-    final isSubscribed = state.contains(channelName);
+  /// Force a fresh load from Supabase (e.g. after navigating back from
+  /// ChannelsScreen).
+  Future<void> refresh() => _load();
 
-    // Optimistic UI Update: Instantly change the button color in the app
-    if (isSubscribed) {
-      state = {...state}..remove(channelName);
+  /// Toggle subscribed state for [channelName].
+  /// If subscribing, inherits existing notification preference (defaults to
+  /// enabled for new channels).
+  /// If unsubscribing, always disables notifications and unsubscribes FCM topic.
+// ✨ UPDATED: Added {String? channelUrl} to the parameters
+  Future<void> toggleSubscription(String channelName, {String? channelUrl}) async {
+    final isCurrentlySubscribed = state.contains(channelName);
+    final newSubscribed = !isCurrentlySubscribed;
+
+    // Get current notification preference
+    final current = await _db.getSubscriptionStatus(channelName);
+    final currentNotif = current?['notifications_enabled'] as bool? ?? true;
+
+    await _db.updateSubscription(
+      channelName: channelName,
+      isSubscribed: newSubscribed,
+      notificationsEnabled: newSubscribed ? currentNotif : false,
+      channelUrl: channelUrl, // Pass the URL down to the database
+    );
+
+    if (newSubscribed) {
+      state = {...state, channelName};
+      if (currentNotif) {
+        await NotificationHelper.subscribeToChannel(channelName);
+      }
     } else {
-      state = {...state}..add(channelName);
+      state = state.where((c) => c != channelName).toSet();
+      await NotificationHelper.unsubscribeFromChannel(channelName);
     }
+  }
 
-    try {
-      // Use maybeSingle() to avoid PGRST116 crash!
-      var channelResp = await supabase.from('channels').select('id').eq('channel_name', channelName).maybeSingle();
-      
-      // If channel doesn't exist in the main table yet, create it safely
-      if (channelResp == null) {
-        channelResp = await supabase.from('channels').insert({'channel_name': channelName}).select('id').single();
-      }
-      final channelId = channelResp['id'];
+  /// Full add-channel flow: saves to DB, updates local state, subscribes FCM.
+  Future<void> addChannel({
+    required String channelName,
+    required String channelUrl,
+    required bool notificationsEnabled,
+  }) async {
+    await _db.updateSubscription(
+      channelName: channelName,
+      isSubscribed: true,
+      notificationsEnabled: notificationsEnabled,
+      channelUrl: channelUrl,
+    );
 
-      // SYNC WITH PYTHON BACKEND: Ensure channel_subscriptions table knows about this!
-      await supabase.from('channel_subscriptions').upsert({
-        'channel_name': channelName,
-        'is_subscribed': !isSubscribed, 
-      }, onConflict: 'channel_name');
+    state = {...state, channelName};
 
-      if (isSubscribed) {
-        // UNSUBSCRIBE
-        await supabase.from('user_subscriptions').delete().match({'user_id': userId, 'channel_id': channelId});
-        await FirebaseMessaging.instance.unsubscribeFromTopic(safeTopicName);
-        print("🔴 Unsubscribed from FCM Topic: $safeTopicName");
-      } else {
-        // SUBSCRIBE
-        await supabase.from('user_subscriptions').upsert({'user_id': userId, 'channel_id': channelId});
-        await FirebaseMessaging.instance.subscribeToTopic(safeTopicName);
-        print("🟢 Subscribed to FCM Topic: $safeTopicName");
-      }
-    } catch (e) {
-      // If the database fails, revert the button back to its previous state
-      if (isSubscribed) {
-        state = {...state}..add(channelName);
-      } else {
-        state = {...state}..remove(channelName);
-      }
-      rethrow; 
+    if (notificationsEnabled) {
+      await NotificationHelper.subscribeToChannel(channelName);
     }
+  }
+
+  /// Update notification preference for a channel.
+  Future<void> setNotifications({
+    required String channelName,
+    required bool enabled,
+    String? channelUrl,
+  }) async {
+    await _db.updateSubscription(
+      channelName: channelName,
+      isSubscribed: true,
+      notificationsEnabled: enabled,
+      channelUrl: channelUrl,
+    );
+
+    if (enabled) {
+      await NotificationHelper.subscribeToChannel(channelName);
+    } else {
+      await NotificationHelper.unsubscribeFromChannel(channelName);
+    }
+  }
+
+  /// Remove channel entirely: deletes from DB, removes from state, unsubs FCM.
+  Future<void> removeChannel(String channelName) async {
+    await _db.deleteSubscription(channelName);
+    await NotificationHelper.unsubscribeFromChannel(channelName);
+    state = state.where((c) => c != channelName).toSet();
   }
 }

@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youtube_summary_app/core/constants/app_colors.dart';
+import 'package:youtube_summary_app/core/constants/app_strings.dart';
+import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
 import 'package:youtube_summary_app/core/theme/theme_provider.dart';
+import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/channel_screen.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/subscriptions_screen.dart';
 import '../../data/services/database_service.dart';
 import '../state/summary_provider.dart';
@@ -51,10 +55,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen for new summaries being generated and refresh the vault automatically.
     ref.listen<SummaryState>(summaryProvider, (previous, next) {
       if (previous?.isLoading == true && next.isLoading == false && next.summary != null) {
-        // Add a short delay to ensure Python background task finishes saving to DB
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) _fetchSummaries();
         });
@@ -62,87 +64,89 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     });
 
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // --- 4-Color System Setup ---
+    final primaryColor = isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
+    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final surfaceColor = isDark ? AppColors.darkSurface : AppColors.lightSurface;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: surfaceColor,
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: surfaceColor,
         elevation: 0,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.menu, color: AppColors.primaryRed),
-        //   onPressed: () {}, 
-        // ),
         centerTitle: true,
         title: Text(
-          'TubeSum',
+          AppStrings.appName,
           style: TextStyle(
-            color: theme.colorScheme.primary,
+            color: primaryColor,
             fontWeight: FontWeight.w900,
-            fontSize: 22,
+            fontSize: AppDimensions.fontTitleMedium,
             letterSpacing: -0.5,
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications, color: theme.colorScheme.primary),
+            icon: Icon(Icons.notifications, color: primaryColor),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SubscriptionsScreen()),
+                MaterialPageRoute(builder: (context) => const ChannelsScreen()),
               );
             },
           ),
           IconButton(
             icon: Icon(
-              // Change icon based on current theme
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-              color: theme.colorScheme.primary,
+              isDark ? Icons.light_mode : Icons.dark_mode,
+              color: primaryColor,
             ),
             onPressed: () {
-              // 🔥 Tell the provider to toggle the theme
               ref.read(themeModeProvider.notifier).toggleTheme();
             },
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : _savedSummaries.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (_hasError) ...[
-                        Icon(Icons.wifi_off_rounded, size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
+                        Icon(Icons.wifi_off_rounded, size: 64, color: secondaryText),
+                        const SizedBox(height: AppDimensions.spacingNormal),
                         Text(
                           'Could not load vault.',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                          style: TextStyle(color: secondaryText, fontSize: AppDimensions.fontNormal),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppDimensions.spacingSmall),
                         TextButton.icon(
                           onPressed: _fetchSummaries,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
+                          icon: Icon(Icons.refresh, color: primaryColor),
+                          label: Text('Retry', style: TextStyle(color: primaryColor)),
                         ),
                       ] else ...[
-                        Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
+                        Icon(Icons.inventory_2_outlined, size: 64, color: secondaryText),
+                        const SizedBox(height: AppDimensions.spacingNormal),
                         Text(
                           'No summaries in vault yet.',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                          style: TextStyle(color: secondaryText, fontSize: AppDimensions.fontNormal),
                         ),
                       ],
                     ],
                   ),
                 )
-                : RefreshIndicator(
+              : RefreshIndicator(
                   onRefresh: _fetchSummaries,
-                  color: theme.colorScheme.primary,
+                  color: primaryColor,
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingMedium, 
+                      vertical: AppDimensions.paddingNormal,
+                    ),
                     itemCount: _savedSummaries.length,
                     itemBuilder: (context, index) {
                       if (index == 0) {
@@ -150,15 +154,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your Vault',
-                              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+                              AppStrings.yourVault,
+                              style: TextStyle(
+                                fontSize: AppDimensions.fontTitleLarge, 
+                                fontWeight: FontWeight.bold, 
+                                color: primaryText,
+                              ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppDimensions.spacingSmall / 2),
                             Text(
-                              'Previously summarized insights.',
-                              style: TextStyle(fontSize: 14, color: theme.textTheme.bodyMedium?.color),
+                              AppStrings.vaultSubtitle,
+                              style: TextStyle(
+                                fontSize: AppDimensions.fontSmall, 
+                                color: secondaryText,
+                              ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppDimensions.spacingLarge),
                             _buildListItem(index),
                           ],
                         );
@@ -187,7 +198,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           relevanceReport = RelevanceReport.fromJson(Map<String, dynamic>.from(rawRelevance));
         }
       } catch (e) {
-        print('Error parsing relevance_report: $e');
+        debugPrint('Error parsing relevance_report: $e');
       }
     }
 
@@ -201,11 +212,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           previousSummaries = List<String>.from(rawPrevious);
         }
       } catch (e) {
-        print('Error parsing previous_summaries: $e');
+        debugPrint('Error parsing previous_summaries: $e');
       }
     }
 
-    // Handle potential corrupted summary (Map instead of String)
     String summaryText = '';
     dynamic rawSummary = item['summary'];
     if (rawSummary != null) {
@@ -219,7 +229,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacingMedium),
       child: SummaryResultCard(
         videoId: videoId ?? '',
         thumbnailUrl: thumbnailUrl,

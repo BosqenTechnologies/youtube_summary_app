@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:youtube_summary_app/core/constants/app_colors.dart';
+import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/full_summary_screen.dart';
 import 'package:youtube_summary_app/features/youtube_summary/presentation/screens/channel_profile_screen.dart';
 import '../state/subscription_provider.dart';
@@ -98,11 +100,11 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
 
   void _showTranscriptBottomSheet(BuildContext context, SimilarSummary similar) {
     final theme = Theme.of(context);
-    final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
-    final onSurface = theme.colorScheme.onSurface;
-    final secondaryColor = theme.colorScheme.onSurface.withOpacity(0.5);
-    // ignore: unused_local_variable
-    final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final cardColor = isDark ? AppColors.darkSurfaceContainerLowest : AppColors.lightSurfaceContainerLowest;
 
     showModalBottomSheet(
       context: context,
@@ -116,21 +118,21 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
         ),
         child: Column(
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacingSmall),
             Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: secondaryColor.withOpacity(0.4),
+                color: secondaryText.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmall ?? 6),
                     child: CachedNetworkImage(
                       imageUrl: 'https://i.ytimg.com/vi/${similar.videoId}/hqdefault.jpg',
                       width: 60,
@@ -139,49 +141,49 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                       errorWidget: (context, url, error) => Container(
                         width: 60,
                         height: 40,
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: const Icon(Icons.error, size: 20),
+                        color: secondaryText.withValues(alpha: 0.2),
+                        child: Icon(Icons.error, size: 20, color: secondaryText),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacingSmall),
                   Expanded(
                     child: Text(
                       'Transcript: ${similar.title}',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
+                      style: TextStyle(fontSize: AppDimensions.fontNormal, fontWeight: FontWeight.bold, color: primaryText),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  IconButton(icon: Icon(Icons.close, color: onSurface), onPressed: () => Navigator.pop(context)),
+                  IconButton(icon: Icon(Icons.close, color: primaryText), onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
-            Divider(height: 1, color: secondaryColor.withOpacity(0.2)),
+            Divider(height: 1, color: secondaryText.withValues(alpha: 0.2)),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'AI SUMMARY',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.0),
+                      style: TextStyle(fontSize: AppDimensions.fontTiny, fontWeight: FontWeight.w800, color: secondaryText, letterSpacing: 1.0),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppDimensions.spacingSmall),
                     Text(
                       similar.summary,
-                      style: TextStyle(fontSize: 15, color: onSurface, height: 1.6, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 15, color: primaryText, height: 1.6, fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: AppDimensions.spacingLarge),
                     Text(
                       'FULL TRANSCRIPT',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 1.0),
+                      style: TextStyle(fontSize: AppDimensions.fontTiny, fontWeight: FontWeight.w800, color: secondaryText, letterSpacing: 1.0),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppDimensions.spacingSmall),
                     Text(
                       similar.transcript.isNotEmpty ? similar.transcript : "No transcript available for this video.",
-                      style: TextStyle(fontSize: 13, color: onSurface.withOpacity(0.8), height: 1.6),
+                      style: TextStyle(fontSize: 13, color: primaryText.withValues(alpha: 0.8), height: 1.6),
                     ),
                   ],
                 ),
@@ -196,22 +198,25 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
   @override
   Widget build(BuildContext context) {
     final isSubscribed = ref.watch(subscriptionProvider).contains(widget.channelName);
+    
     final theme = Theme.of(context);
-    final cardColor = theme.cardTheme.color ?? theme.colorScheme.surface;
-    final onSurface = theme.colorScheme.onSurface;
-    final primary = theme.colorScheme.primary;
-    final secondaryColor = onSurface.withOpacity(0.5);
-    final fillColor = theme.inputDecorationTheme.fillColor ?? theme.colorScheme.surfaceContainerHighest;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryColor = isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
+    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final cardColor = isDark ? AppColors.darkSurfaceContainerLowest : AppColors.lightSurfaceContainerLowest;
+    final inputFill = isDark ? AppColors.darkSurfaceContainerLow : AppColors.lightSurfaceContainerLow;
 
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
             color: cardColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
             boxShadow: [
               if (!widget.isViewed) 
-                BoxShadow(color: primary.withOpacity(0.2), blurRadius: 10, spreadRadius: 2)
+                BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)
             ],
           ),
           child: Column(
@@ -220,44 +225,44 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLarge)),
                     child: CachedNetworkImage(
                       imageUrl: widget.thumbnailUrl,
                       width: double.infinity,
                       height: 180,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: theme.colorScheme.surfaceContainerHighest),
+                      placeholder: (context, url) => Container(color: inputFill),
                       errorWidget: (context, url, error) => Container(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: Icon(Icons.error, color: secondaryColor),
+                        color: inputFill,
+                        child: Icon(Icons.error, color: secondaryText),
                       ),
                     ),
                   ),
                   if (!widget.isViewed)
                     Positioned(
-                      top: 12,
-                      left: 12,
+                      top: AppDimensions.paddingNormal,
+                      left: AppDimensions.paddingNormal,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(6)),
-                        child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(6)),
+                        child: const Text('NEW', style: TextStyle(color: AppColors.textLight, fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
                     ),
                 ],
               ),
 
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppDimensions.paddingNormal),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.title,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: onSurface),
+                      style: TextStyle(fontSize: AppDimensions.fontNormal, fontWeight: FontWeight.bold, color: primaryText),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimensions.spacingSmall),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -267,25 +272,28 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           child: Text(
                             widget.channelName.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 12, 
+                              fontSize: AppDimensions.fontTiny, 
                               fontWeight: FontWeight.w700, 
-                              color: primary, 
+                              color: primaryColor, 
                               letterSpacing: 0.5,
                               decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
                         InkWell(
-                          onTap: () => ref.read(subscriptionProvider.notifier).toggleSubscription(widget.channelName),
+                          onTap: () => ref.read(subscriptionProvider.notifier).toggleSubscription(
+                            widget.channelName,
+                            channelUrl: widget.channelUrl, // ✨ FIX: Send URL to provider
+                          ),
                           child: Icon(
                             isSubscribed ? Icons.check_circle : Icons.add_circle_outline,
-                            color: isSubscribed ? Colors.green : secondaryColor,
+                            color: isSubscribed ? Colors.green : secondaryText,
                             size: 20,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimensions.spacingNormal),
 
                     Row(
                       children: [
@@ -293,11 +301,11 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                           child: ElevatedButton(
                             onPressed: () => _openFullSummary(context),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
+                              backgroundColor: primaryColor,
+                              foregroundColor: AppColors.textLight,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusSmall ?? 8)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -309,16 +317,16 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppDimensions.spacingSmall),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () => _openTranscript(context),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: fillColor,
-                              foregroundColor: onSurface,
+                              backgroundColor: inputFill,
+                              foregroundColor: primaryText,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusSmall ?? 8)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -339,39 +347,39 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
           ),
         ),
         
-        // RELATED CONTENT OUTSIDE BELOW
+        // RELATED CONTENT
         if (widget.relevanceReport != null && widget.relevanceReport!.isRelated) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacingSmall),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppDimensions.paddingNormal),
             decoration: BoxDecoration(
               color: cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: fillColor.withOpacity(0.5)),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
+              border: Border.all(color: inputFill),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.hub_outlined, size: 14, color: secondaryColor),
+                    Icon(Icons.hub_outlined, size: 14, color: secondaryText),
                     const SizedBox(width: 6),
                     Text(
                       'RELATED INTELLIGENCE',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: secondaryColor, letterSpacing: 0.8),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: secondaryText, letterSpacing: 0.8),
                     ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 ...widget.relevanceReport!.similarSummaries.take(2).map((similar) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
+                  padding: const EdgeInsets.only(bottom: AppDimensions.spacingSmall),
                   child: InkWell(
                     onTap: () => _showTranscriptBottomSheet(context, similar),
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: fillColor.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(8),
+                        color: inputFill.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall ?? 8),
                       ),
                       child: Row(
                         children: [
@@ -385,8 +393,8 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                               errorWidget: (context, url, error) => Container(
                                 width: 48,
                                 height: 32,
-                                color: theme.colorScheme.surfaceContainerHighest,
-                                child: const Icon(Icons.image_not_supported, size: 14),
+                                color: secondaryText.withValues(alpha: 0.2),
+                                child: Icon(Icons.image_not_supported, size: 14, color: secondaryText),
                               ),
                             ),
                           ),
@@ -397,18 +405,18 @@ class _SummaryResultCardState extends ConsumerState<SummaryResultCard> {
                               children: [
                                 Text(
                                   similar.title,
-                                  style: TextStyle(fontSize: 11, color: onSurface, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 11, color: primaryText, fontWeight: FontWeight.bold),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
                                   "Tap to view related transcript",
-                                  style: TextStyle(fontSize: 9, color: secondaryColor),
+                                  style: TextStyle(fontSize: 9, color: secondaryText),
                                 ),
                               ],
                             ),
                           ),
-                          Icon(Icons.chevron_right, size: 16, color: secondaryColor),
+                          Icon(Icons.chevron_right, size: 16, color: secondaryText),
                         ],
                       ),
                     ),

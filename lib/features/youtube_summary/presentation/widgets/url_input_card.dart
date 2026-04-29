@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
-// UI uses Theme.of(context) so colors follow active theme
+import 'package:youtube_summary_app/core/constants/app_colors.dart';
+import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
+import 'package:youtube_summary_app/core/constants/app_strings.dart';
 
 class UrlInputCard extends StatelessWidget {
   final VoidCallback onSummarize;
@@ -15,12 +16,20 @@ class UrlInputCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // --- 4-Color System Setup ---
+    final primaryColor = isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
+    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final cardColor = isDark ? AppColors.darkSurfaceContainerLowest : AppColors.lightSurfaceContainerLowest;
+    final inputFill = isDark ? AppColors.darkSurfaceContainerLow : AppColors.lightSurfaceContainerLow;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -28,44 +37,49 @@ class UrlInputCard extends StatelessWidget {
           // URL Input Field
           Container(
             decoration: BoxDecoration(
-              color: theme.inputDecorationTheme.fillColor ?? const Color(0xFFF3F4F6), // Use theme input fill if available
-              borderRadius: BorderRadius.circular(12),
+              color: inputFill,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
             ),
             child: TextField(
               controller: controller,
+              style: TextStyle(color: primaryText, fontSize: AppDimensions.fontNormal),
               decoration: InputDecoration(
                 hintText: 'https://www.youtube.com/watch...',
-                hintStyle: TextStyle(color: theme.hintColor, fontSize: 14),
-                prefixIcon: Icon(Icons.link, color: theme.hintColor),
+                hintStyle: TextStyle(color: secondaryText, fontSize: AppDimensions.fontSmall),
+                prefixIcon: Icon(Icons.link, color: secondaryText),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingNormal),
               ),
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingNormal),
           
           // Summarize Button
           SizedBox(
-            height: 54,
+            height: AppDimensions.buttonHeight,
             child: ElevatedButton(
               onPressed: onSummarize,
               style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
+                backgroundColor: primaryColor,
+                foregroundColor: AppColors.textLight, // ✨ THE FIX: Forces white text & icon
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
-                  Icon(Icons.auto_awesome, size: 20),
-                  SizedBox(width: 8),
+                  Icon(Icons.auto_awesome, size: 20, color: AppColors.textLight),
+                  SizedBox(width: AppDimensions.spacingSmall),
                   Text(
-                    'Summarize',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    AppStrings.summarize,
+                    style: TextStyle(
+                      fontSize: AppDimensions.fontNormal, 
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textLight, // ✨ Explicitly white
+                    ),
                   ),
                 ],
               ),

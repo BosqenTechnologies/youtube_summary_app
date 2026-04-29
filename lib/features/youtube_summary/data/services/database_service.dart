@@ -1,23 +1,31 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Central data-access layer for TubeSum.
+/// Every subscription read/write is scoped to the currently signed-in user.
+/// RLS on the `channel_subscriptions` table enforces this server-side as well.
 class DatabaseService {
   final supabase = Supabase.instance.client;
 
-  // ── 1. Video Summary Methods ──
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  /// Returns the current user's UUID, or null if not signed in.
+  String? get _uid => supabase.auth.currentUser?.id;
+
+  // ── 1. Video Summary Methods ─────────────────────────────────────────────
 
   Future<void> saveVideoData(Map<String, dynamic> videoData) async {
     try {
       await supabase.from('youtube_summaries').insert({
-        'video_id': videoData['video_id'],
-        'video_url': videoData['video_url'],
-        'title': videoData['title'],
-        'channel_name': videoData['channel_name'],
-        'transcript': videoData['transcript'],
-        'summary': videoData['summary'],
-        'channel_url': videoData['channel_url'],
-        'channel_profile_summary': videoData['channel_profile_summary'],
-        'previous_summaries': videoData['previous_summaries'],
-        'relevance_report': videoData['relevance_report'],
+        'video_id':               videoData['video_id'],
+        'video_url':              videoData['video_url'],
+        'title':                  videoData['title'],
+        'channel_name':           videoData['channel_name'],
+        'transcript':             videoData['transcript'],
+        'summary':                videoData['summary'],
+        'channel_url':            videoData['channel_url'],
+        'channel_profile_summary':videoData['channel_profile_summary'],
+        'previous_summaries':     videoData['previous_summaries'],
+        'relevance_report':       videoData['relevance_report'],
       });
       print('✅ Saved to Supabase successfully!');
     } on PostgrestException catch (e) {
@@ -45,15 +53,17 @@ class DatabaseService {
           });
 
       final list = List<Map<String, dynamic>>.from(response);
-      // Only show rows with a real summary — filters out any error/partial records
-      return list.where((row) => row['summary'] != null && row['summary'].toString().trim().isNotEmpty).toList();
+      return list
+          .where((row) =>
+              row['summary'] != null &&
+              row['summary'].toString().trim().isNotEmpty)
+          .toList();
     } catch (e) {
       print('❌ Unexpected error fetching from Supabase: $e');
       return [];
     }
   }
 
-  /// Fetch a single saved summary by its video_id (for Related Intelligence navigation).
   Future<Map<String, dynamic>?> getSummaryByVideoId(String videoId) async {
     try {
       final response = await supabase
@@ -68,43 +78,64 @@ class DatabaseService {
     }
   }
 
-  // ── 2. Subscription & Notification Methods ──
+  // ── 2. Per-User Subscription Methods ─────────────────────────────────────
+  //
+  // Every method below SCOPES itself to the current user.
+  // RLS on `channel_subscriptions` provides a server-side second layer of
+  // protection — even if the client sends the wrong user_id, Supabase rejects
+  // the row.
 
-  /// Upserts a channel subscription row and ensures the channel exists in the main table.
+  /// Upsert one subscription row for the current user.
+  /// Also ensures the channel exists in the global `channels` registry.
   Future<void> updateSubscription({
     required String channelName,
     required bool isSubscribed,
     required bool notificationsEnabled,
-    String? channelUrl, 
+    String? channelUrl,
   }) async {
+    final uid = _uid;
+    if (uid == null) {
+      print('❌ updateSubscription: no signed-in user');
+      return;
+    }
+
     try {
-      // 🔥 CRITICAL FIX: Ensure the channel exists in the main 'channels' table first!
+      // Keep the global channels registry up-to-date
       await supabase.from('channels').upsert({
         'channel_name': channelName,
-        if (channelUrl != null && channelUrl.isNotEmpty) 'channel_url': channelUrl,
+        if (channelUrl != null && channelUrl.isNotEmpty)
+          'channel_url': channelUrl,
       }, onConflict: 'channel_name');
 
-      // Then update the Python API table preferences
+      // Per-user subscription row
+      // onConflict targets (user_id, channel_name) — see UNIQUE constraint
       await supabase.from('channel_subscriptions').upsert({
-        'channel_name': channelName,
-        'is_subscribed': isSubscribed,
+        'user_id':              uid,
+        'channel_name':         channelName,
+        'is_subscribed':        isSubscribed,
         'notifications_enabled': notificationsEnabled,
-        if (channelUrl != null && channelUrl.isNotEmpty) 'channel_url': channelUrl,
-      });
-      print('✅ Subscription updated for $channelName');
+        if (channelUrl != null && channelUrl.isNotEmpty)
+          'channel_url': channelUrl,
+      }, onConflict: 'user_id,channel_name');
+
+      print('✅ Subscription updated — channel: $channelName | uid: $uid');
     } catch (e) {
       print('❌ Error updating subscription: $e');
       rethrow;
     }
   }
 
-  /// Fetches the current subscription status for ONE specific channel.
+  /// Fetch subscription status for ONE channel for the current user.
   Future<Map<String, dynamic>?> getSubscriptionStatus(
       String channelName) async {
+    final uid = _uid;
+    if (uid == null) return null;
+
     try {
       final response = await supabase
           .from('channel_subscriptions')
           .select()
+          .eq('user_id', uid)
           .eq('channel_name', channelName)
           .maybeSingle();
       return response;
@@ -114,12 +145,16 @@ class DatabaseService {
     }
   }
 
-  // 🔥 NEW: Fetch ALL channel subscriptions (for the Channels screen)
+  /// Fetch ALL subscription rows for the current user.
   Future<List<Map<String, dynamic>>> getAllSubscriptions() async {
+    final uid = _uid;
+    if (uid == null) return [];
+
     try {
       final response = await supabase
           .from('channel_subscriptions')
           .select()
+          .eq('user_id', uid)
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -128,21 +163,26 @@ class DatabaseService {
     }
   }
 
-  // 🔥 NEW: Remove a channel subscription entirely
+  /// Permanently delete a subscription row for the current user.
   Future<void> deleteSubscription(String channelName) async {
+    final uid = _uid;
+    if (uid == null) return;
+
     try {
       await supabase
           .from('channel_subscriptions')
           .delete()
+          .eq('user_id', uid)
           .eq('channel_name', channelName);
-      print('🗑️ Deleted subscription for $channelName');
+      print('🗑️ Deleted subscription — channel: $channelName | uid: $uid');
     } catch (e) {
       print('❌ Error deleting subscription: $e');
       rethrow;
     }
   }
 
-  // Mark a video as viewed
+  // ── 3. Video viewed state ─────────────────────────────────────────────────
+
   Future<void> markAsViewed(String videoId) async {
     try {
       await supabase

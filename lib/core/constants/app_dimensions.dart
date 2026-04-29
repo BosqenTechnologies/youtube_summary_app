@@ -22,12 +22,13 @@ class AppDimensions {
   static const double fontTitleLarge = 32.0;
 
   // Components
+  static const double radiusSmall = 8.0; // 🔥 ADDED THIS LINE
+  static const double radiusMedium = 12.0;
   static const double radiusNormal = 12.0;
+  static const double radiusLarge = 16.0;
+  
   static const double buttonHeight = 56.0;
   static const double borderWidth = 1.5;
   static const double progressIndicatorSize = 24.0;
   static const double progressIndicatorStroke = 2.5;
-
-  static const double radiusLarge = 16.0;
-static const double radiusMedium = 12.0;
 }

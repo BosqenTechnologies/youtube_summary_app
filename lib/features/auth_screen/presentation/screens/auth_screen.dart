@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:youtube_summary_app/core/constants/app_colors.dart';
 import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
-import 'package:youtube_summary_app/core/constants/app_strings.dart';
+import 'package:youtube_summary_app/core/constants/app_strings.dart'; // Ensure correct import path
+
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import 'otp_screen.dart';
@@ -15,7 +17,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
-  bool _isSignUp = false;
+  final bool _isSignUp = false;
 
   void _submitEmail() {
     final email = _emailController.text.trim();
@@ -23,7 +25,7 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please enter a valid email address.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: AppColors.errorRed, // Fixed color
         ),
       );
       return;
@@ -40,6 +42,13 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // --- 4-Color System Setup ---
+    final primaryColor = isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
+    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final inputFill = isDark ? AppColors.darkSurfaceContainerLow : AppColors.lightSurfaceContainerLow;
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
@@ -47,29 +56,25 @@ class _AuthScreenState extends State<AuthScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: theme.colorScheme.error,
+              backgroundColor: AppColors.errorRed,
             ),
           );
         } else if (state is AuthOtpSentSuccess) {
-          
-          // 🔥 FIX: Grab the existing cubit before navigating
           final authCubit = context.read<AuthCubit>();
           
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => BlocProvider.value(
-                // 🔥 FIX: Pass the existing cubit to the new OtpScreen route
                 value: authCubit, 
                 child: OtpScreen(email: state.email),
               ),
             ),
           );
-          
         }
       },
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -77,7 +82,7 @@ class _AuthScreenState extends State<AuthScreen> {
           title: Text(
             AppStrings.appName,
             style: TextStyle(
-              color: theme.colorScheme.primary,
+              color: primaryColor, // Brand Color
               fontSize: AppDimensions.fontTitleMedium,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
@@ -99,7 +104,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: TextStyle(
                       fontSize: AppDimensions.fontTitleLarge,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
+                      color: primaryText, // Primary Text
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -108,8 +113,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     AppStrings.joinRevolution,
                     style: TextStyle(
                       fontSize: AppDimensions.fontNormal,
-                      color: theme.textTheme.bodyMedium?.color ??
-                          theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: secondaryText, // Secondary Text
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -119,8 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     AppStrings.welcomeBack,
                     style: TextStyle(
                       fontSize: AppDimensions.fontNormal,
-                      color: theme.textTheme.bodyMedium?.color ??
-                          theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: secondaryText, // Secondary Text
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -132,8 +135,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     fontSize: AppDimensions.fontTiny,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
-                    color: theme.textTheme.labelSmall?.color ??
-                        theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: secondaryText, // Secondary Text
                   ),
                 ),
                 const SizedBox(height: AppDimensions.spacingSmall),
@@ -142,39 +144,32 @@ class _AuthScreenState extends State<AuthScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: TextStyle(
                     fontSize: AppDimensions.fontNormal,
-                    color: theme.textTheme.bodyMedium?.color ??
-                        theme.colorScheme.onSurface,
+                    color: primaryText, // Primary Text
                   ),
                   decoration: InputDecoration(
                     hintText: AppStrings.emailHint,
                     hintStyle: TextStyle(
-                        color: theme.inputDecorationTheme.hintStyle?.color ??
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                        fontSize: AppDimensions.fontNormal),
-                    prefixIcon: Icon(Icons.email_outlined,
-                        color: theme.iconTheme.color ??
-                            theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                      color: secondaryText.withValues(alpha: 0.6), // Secondary Text
+                      fontSize: AppDimensions.fontNormal,
+                    ),
+                    prefixIcon: Icon(Icons.email_outlined, color: secondaryText),
                     filled: true,
-                    fillColor: theme.inputDecorationTheme.fillColor ??
-                        theme.colorScheme.surfaceContainerHighest,
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: AppDimensions.paddingNormal),
+                    fillColor: inputFill,
+                    contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingNormal),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: AppDimensions.borderWidth),
+                        color: primaryColor,
+                        width: AppDimensions.borderWidth,
+                      ),
                     ),
                   ),
                 ),
@@ -187,70 +182,35 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _submitEmail,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
+                          backgroundColor: primaryColor, // Button Background
+                          foregroundColor: AppColors.textLight, // ✨ FIX: Button Text Color
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                AppDimensions.radiusNormal),
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
                           ),
                           elevation: 0,
                         ),
                         child: isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                                 height: AppDimensions.progressIndicatorSize,
                                 width: AppDimensions.progressIndicatorSize,
                                 child: CircularProgressIndicator(
-                                  color: theme.colorScheme.onPrimary,
-                                  strokeWidth:
-                                      AppDimensions.progressIndicatorStroke,
+                                  color: AppColors.textLight,
+                                  strokeWidth: AppDimensions.progressIndicatorStroke,
                                 ),
                               )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    AppStrings.signIn,
-                                    style: const TextStyle(
-                                      fontSize: AppDimensions.fontButton,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                            : const Text(
+                                AppStrings.signIn,
+                                style: TextStyle(
+                                  fontSize: AppDimensions.fontButton,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textLight, // ✨ Explicitly white
+                                ),
                               ),
                       ),
                     );
                   },
                 ),
                 const SizedBox(height: AppDimensions.spacingLarge),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     Text(
-                //       _isSignUp
-                //           ? AppStrings.alreadyHaveAccount
-                //           : AppStrings.needAccount,
-                //       style: TextStyle(
-                //           color: theme.textTheme.bodySmall?.color ??
-                //               theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                //           fontSize: AppDimensions.fontSmall),
-                //     ),
-                //     GestureDetector(
-                //       onTap: () {
-                //         setState(() {
-                //           _isSignUp = !_isSignUp;
-                //         });
-                //       },
-                //       child: Text(
-                //         _isSignUp ? AppStrings.signIn : AppStrings.signUp,
-                //         style: TextStyle(
-                //           color: theme.colorScheme.primary,
-                //           fontWeight: FontWeight.bold,
-                //           fontSize: AppDimensions.fontSmall,
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
               ],
             ),
           ),
