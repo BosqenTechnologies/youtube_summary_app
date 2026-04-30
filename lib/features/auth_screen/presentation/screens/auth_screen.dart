@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:youtube_summary_app/core/constants/app_colors.dart';
 import 'package:youtube_summary_app/core/constants/app_dimensions.dart';
-import 'package:youtube_summary_app/core/constants/app_strings.dart'; // Ensure correct import path
+import 'package:youtube_summary_app/core/constants/app_strings.dart';
 
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
@@ -21,16 +21,27 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _submitEmail() {
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter a valid email address.'),
-          backgroundColor: AppColors.errorRed, // Fixed color
-        ),
-      );
+
+    if (email.isEmpty) {
+      _showError('Please enter your email address.');
       return;
     }
+    if (!email.contains('@') || !email.contains('.')) {
+      _showError('Please enter a valid email address (e.g. name@example.com).');
+      return;
+    }
+
     context.read<AuthCubit>().sendOtp(email);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.errorRed,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -44,37 +55,40 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // --- 4-Color System Setup ---
-    final primaryColor = isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
-    final primaryText = isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
-    final secondaryText = isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
-    final inputFill = isDark ? AppColors.darkSurfaceContainerLow : AppColors.lightSurfaceContainerLow;
+    final primaryColor =
+        isDark ? AppColors.primaryRedDark : AppColors.primaryRedLight;
+    final primaryText =
+        isDark ? AppColors.darkOnSurface : AppColors.lightOnSurface;
+    final secondaryText =
+        isDark ? AppColors.darkSecondaryTonal : AppColors.lightSecondaryTonal;
+    final inputFill = isDark
+        ? AppColors.darkSurfaceContainerLow
+        : AppColors.lightSurfaceContainerLow;
 
     return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.errorRed,
-            ),
-          );
+          // Error message is already user-readable (mapped in AuthCubit)
+          _showError(state.message);
         } else if (state is AuthOtpSentSuccess) {
           final authCubit = context.read<AuthCubit>();
-          
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => BlocProvider.value(
-                value: authCubit, 
-                child: OtpScreen(email: state.email),
+                value: authCubit,
+                child: OtpScreen(
+                  email: state.email,
+                  isTestEmail: state.isTestEmail, // Pass debug flag to OTP screen
+                ),
               ),
             ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        backgroundColor:
+            isDark ? AppColors.darkSurface : AppColors.lightSurface,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -82,7 +96,7 @@ class _AuthScreenState extends State<AuthScreen> {
           title: Text(
             AppStrings.appName,
             style: TextStyle(
-              color: primaryColor, // Brand Color
+              color: primaryColor,
               fontSize: AppDimensions.fontTitleMedium,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
@@ -104,7 +118,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: TextStyle(
                       fontSize: AppDimensions.fontTitleLarge,
                       fontWeight: FontWeight.bold,
-                      color: primaryText, // Primary Text
+                      color: primaryText,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -113,7 +127,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     AppStrings.joinRevolution,
                     style: TextStyle(
                       fontSize: AppDimensions.fontNormal,
-                      color: secondaryText, // Secondary Text
+                      color: secondaryText,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -123,7 +137,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     AppStrings.welcomeBack,
                     style: TextStyle(
                       fontSize: AppDimensions.fontNormal,
-                      color: secondaryText, // Secondary Text
+                      color: secondaryText,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -135,37 +149,45 @@ class _AuthScreenState extends State<AuthScreen> {
                     fontSize: AppDimensions.fontTiny,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
-                    color: secondaryText, // Secondary Text
+                    color: secondaryText,
                   ),
                 ),
                 const SizedBox(height: AppDimensions.spacingSmall),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submitEmail(),
                   style: TextStyle(
                     fontSize: AppDimensions.fontNormal,
-                    color: primaryText, // Primary Text
+                    color: primaryText,
                   ),
                   decoration: InputDecoration(
                     hintText: AppStrings.emailHint,
                     hintStyle: TextStyle(
-                      color: secondaryText.withValues(alpha: 0.6), // Secondary Text
+                      color: secondaryText.withValues(alpha: 0.6),
                       fontSize: AppDimensions.fontNormal,
                     ),
-                    prefixIcon: Icon(Icons.email_outlined, color: secondaryText),
+                    prefixIcon:
+                        Icon(Icons.email_outlined, color: secondaryText),
                     filled: true,
                     fillColor: inputFill,
-                    contentPadding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingNormal),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: AppDimensions.paddingNormal),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
+                      borderRadius:
+                          BorderRadius.circular(AppDimensions.radiusNormal),
                       borderSide: BorderSide(
                         color: primaryColor,
                         width: AppDimensions.borderWidth,
@@ -182,10 +204,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _submitEmail,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor, // Button Background
-                          foregroundColor: AppColors.textLight, // ✨ FIX: Button Text Color
+                          backgroundColor: primaryColor,
+                          foregroundColor: AppColors.textLight,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusNormal),
+                            borderRadius: BorderRadius.circular(
+                                AppDimensions.radiusNormal),
                           ),
                           elevation: 0,
                         ),
@@ -195,7 +218,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                 width: AppDimensions.progressIndicatorSize,
                                 child: CircularProgressIndicator(
                                   color: AppColors.textLight,
-                                  strokeWidth: AppDimensions.progressIndicatorStroke,
+                                  strokeWidth:
+                                      AppDimensions.progressIndicatorStroke,
                                 ),
                               )
                             : const Text(
@@ -203,7 +227,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 style: TextStyle(
                                   fontSize: AppDimensions.fontButton,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textLight, // ✨ Explicitly white
+                                  color: AppColors.textLight,
                                 ),
                               ),
                       ),

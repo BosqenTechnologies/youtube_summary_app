@@ -6,7 +6,12 @@ class AuthLoading extends AuthState {}
 
 class AuthOtpSentSuccess extends AuthState {
   final String email;
-  AuthOtpSentSuccess({required this.email});
+  final bool isTestEmail; // Tells OTP screen to show the debug hint banner
+
+  AuthOtpSentSuccess({
+    required this.email,
+    this.isTestEmail = false,
+  });
 }
 
 class AuthVerifiedSuccess extends AuthState {}

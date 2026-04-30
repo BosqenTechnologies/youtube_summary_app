@@ -1,0 +1,5 @@
+{
+  "buildCommand": "flutter build web --dart-define=TEST_EMAIL_1=$TEST_EMAIL_1 --dart-define=TEST_EMAIL_2=$TEST_EMAIL_2 --dart-define=TEST_OTP_PIN=$TEST_OTP_PIN",
+  "outputDirectory": "build/web",
+  "installCommand": "flutter pub get"
+}
